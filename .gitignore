@@ -151,3 +151,5 @@ configs/config.json
 filelists/test.txt
 filelists/train.txt
 filelists/val.txt
+
+.idea

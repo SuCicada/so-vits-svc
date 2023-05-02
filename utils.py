@@ -87,7 +87,7 @@ def compute_f0_uv_torchcrepe(wav_numpy, p_len=None, sampling_rate=44100, hop_len
         p_len = x.shape[0]//hop_length
     else:
         assert abs(p_len-x.shape[0]//hop_length) < 4, "pad length error"
-    
+
     f0_min = 50
     f0_max = 1100
     F0Creper = CrepePitchExtractor(hop_length=hop_length,f0_min=f0_min,f0_max=f0_max,device=device,threshold=cr_threshold)
@@ -208,7 +208,7 @@ def f0_to_coarse(f0):
 
 
 def get_hubert_model():
-  vec_path = "hubert/checkpoint_best_legacy_500.pt"
+  vec_path = os.path.join(os.path.dirname(__file__),"hubert/checkpoint_best_legacy_500.pt")
   print("load model(s) from {}".format(vec_path))
   from fairseq import checkpoint_utils
   models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task(
@@ -509,7 +509,7 @@ def mix_model(model_paths,mix_rate,mode):
         model_tem["model"][k] += model[k]*mix_rate[i]
   torch.save(model_tem,os.path.join(os.path.curdir,"output.pth"))
   return os.path.join(os.path.curdir,"output.pth")
-  
+
 class HParams():
   def __init__(self, **kwargs):
     for k, v in kwargs.items():

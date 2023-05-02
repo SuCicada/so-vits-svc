@@ -13,7 +13,7 @@ import re
 import json
 
 import subprocess
-import edge_tts
+# import edge_tts
 import asyncio
 from scipy.io import wavfile
 import librosa
@@ -78,7 +78,7 @@ def modelAnalysis(model_path,config_path,cluster_model_path,device,enhance):
     global model
     try:
         device = cuda[device] if "CUDA" in device else device
-        model = Svc(model_path.name, config_path.name, device=device if device!="Auto" else None, cluster_model_path = cluster_model_path.name if cluster_model_path != None else "",nsf_hifigan_enhance=enhance)
+        model = Svc(model_path, config_path, device=device if device!="Auto" else None, cluster_model_path = cluster_model_path.name if cluster_model_path != None else "",nsf_hifigan_enhance=enhance)
         spks = list(model.spk2id.keys())
         device_name = torch.cuda.get_device_properties(model.dev).name if "cuda" in str(model.dev) else str(model.dev)
         msg = f"成功加载模型到设备{device_name}上\n"
@@ -94,7 +94,7 @@ def modelAnalysis(model_path,config_path,cluster_model_path,device,enhance):
         if debug: traceback.print_exc()
         raise gr.Error(e)
 
-    
+
 def modelUnload():
     global model
     if model is None:
@@ -106,7 +106,15 @@ def modelUnload():
         return sid.update(choices = [],value=""),"模型卸载完毕!"
 
 
-def vc_fn(sid, input_audio, vc_transform, auto_f0,cluster_ratio, slice_db, noise_scale,pad_seconds,cl_num,lg_num,lgr_num,F0_mean_pooling,enhancer_adaptive_key,cr_threshold):
+def vc_fn(sid, input_audio, vc_transform, auto_f0,cluster_ratio,
+          slice_db, noise_scale,pad_seconds,cl_num,lg_num,lgr_num,
+          F0_mean_pooling,enhancer_adaptive_key,cr_threshold):
+    """
+    sid, vc_input3, vc_transform,auto_f0,cluster_ratio, slice_db, noise_scale,pad_seconds,cl_num,lg_num,lgr_num,F0_mean_pooling,enhancer_adaptive_key,cr_threshold
+    """
+    print(sid, input_audio, vc_transform, auto_f0,cluster_ratio)
+    print(slice_db, noise_scale,pad_seconds,cl_num,lg_num,lgr_num)
+    print(F0_mean_pooling,enhancer_adaptive_key,cr_threshold)
     global model
     try:
         if input_audio is None:
@@ -142,8 +150,8 @@ def tts_func(_text,_rate,_voice):
     #使用edge-tts把文字转成音频
     # voice = "zh-CN-XiaoyiNeural"#女性，较高音
     # voice = "zh-CN-YunxiNeural"#男性
-    voice = "zh-CN-YunxiNeural"#男性
-    if ( _voice == "女" ) : voice = "zh-CN-XiaoyiNeural"
+    voice = "ja-JP-KeitaNeural"#男性
+    if ( _voice == "女" ) : voice = "ja-JP-NanamiNeural"
     output_file = _text[0:10]+".wav"
     # communicate = edge_tts.Communicate(_text, voice)
     # await communicate.save(output_file)
@@ -210,8 +218,8 @@ with gr.Blocks(
                     gr.Markdown(value="""
                         <font size=2> 模型设置</font>
                         """)
-                    model_path = gr.File(label="选择模型文件")
-                    config_path = gr.File(label="选择配置文件")
+                    model_path = gr.Textbox(label="选择模型文件")
+                    config_path = gr.Textbox(label="选择配置文件")
                     cluster_model_path = gr.File(label="选择聚类模型文件（没有可以不选）")
                     device = gr.Dropdown(label="推理设备，默认为自动选择CPU和GPU", choices=["Auto",*cuda.keys(),"CPU"], value="Auto")
                     enhance = gr.Checkbox(label="是否使用NSF_HIFIGAN增强,该选项对部分训练集少的模型有一定的音质增强效果，但是对训练好的模型有反面效果，默认关闭", value=False)
@@ -291,8 +299,8 @@ with gr.Blocks(
                     mix_model_path.change(updata_mix_info,[mix_model_path],[mix_model_output1])
                     mix_model_upload_button.upload(upload_mix_append_file, [mix_model_upload_button,mix_model_path], [mix_model_path,mix_model_output1])
                     mix_submit.click(mix_submit_click, [mix_model_output1,mix_mode], [mix_model_output2])
-                    
-                    
+
+
     with gr.Tabs():
         with gr.Row(variant="panel"):
             with gr.Column():
@@ -308,4 +316,3 @@ with gr.Blocks(
     app.launch()
 
 
- 
