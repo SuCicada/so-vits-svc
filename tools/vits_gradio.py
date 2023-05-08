@@ -1,8 +1,11 @@
+import argparse
 import logging
 import os
 import sys
 
 import gradio as gr
+import uvicorn
+from gradio import networking, utils
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
@@ -20,8 +23,10 @@ class VitsGradio:
     def __init__(self):
         with gr.Blocks() as self.Vits:
             gr.Markdown("# Lain TTS with so-vits-svc-4.0 ")
-            gr.Markdown("## web source in: [SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/blob/4.0/tools/vits_gradio.py) ")
-            gr.Markdown("## Models in: [SuCicada/Lain-so-vits-svc-4.0](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.0/tree/main) ")
+            gr.Markdown(
+                "## web source in: [SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/blob/4.0/tools/vits_gradio.py) ")
+            gr.Markdown(
+                "## Models in: [SuCicada/Lain-so-vits-svc-4.0](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.0/tree/main) ")
 
             with gr.Tabs():
                 with gr.TabItem("tts"):
@@ -73,7 +78,7 @@ class VitsGradio:
     def tts_submit_func(self, text, tts_engine, language, speed):
         print(text, tts_engine, language)
         if self.svc_infer is None:
-            self.svc_infer = SvcInfer()
+            self.svc_infer = new_svc_infer()
         res = self.svc_infer.get_audio(
             tts_engine=tts_engine,
             text=text,
@@ -85,14 +90,53 @@ class VitsGradio:
     def vc_submit_func(self, svc_input_audio):
         print(svc_input_audio)
         if self.svc_infer is None:
-            self.svc_infer = SvcInfer()
+            self.svc_infer = new_svc_infer()
         sampling_rate, audio = svc_input_audio
         res = self.svc_infer.transform_audio(sampling_rate, audio)
         return res
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--model_path', type=str, help='model_path')
+parser.add_argument('--config_path', type=str, help='config_path')
+parser.add_argument('--debug', action='store_true', help='debug')
+args = parser.parse_args()
+
+
+def new_svc_infer():
+    model_path = args.model_path
+    config_path = args.config_path
+    return SvcInfer(model_path=model_path, config_path=config_path)
+
+
 grVits = VitsGradio()
 demo = grVits.Vits
 
+
+def main():
+    if args.debug:
+        port = networking.get_first_available_port(
+            networking.INITIAL_PORT_VALUE,
+            networking.INITIAL_PORT_VALUE + networking.TRY_NUM_PORTS,
+        )
+        original_path = sys.argv[0]
+        abs_original_path = utils.abspath(original_path)
+        path = os.path.normpath(original_path)
+        path = path.replace("/", ".")
+        path = path.replace("\\", ".")
+        filename = os.path.splitext(path)[0]
+        from pathlib import Path
+        import inspect
+        import gradio
+
+        # gradio_folder = Path(inspect.getfile(gradio)).parent
+        abs_parent: str = str(abs_original_path.parent)
+
+        print("filename", filename, abs_parent)
+        uvicorn.run(f"{filename}:demo.app", reload=True, reload_dirs=[abs_parent], port=port)
+    else:
+        demo.launch()
+
+
 if __name__ == '__main__':
-    demo.launch()
+    main()

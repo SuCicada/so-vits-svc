@@ -1,14 +1,9 @@
-import asyncio
 import io
-from io import BytesIO
 
 import numpy
 import numpy as np
 import soundfile
-from gtts import gTTS
 from pydub import AudioSegment
-
-from tools.tts_utils import text_to_wav
 
 
 def numpy_to_mem_file(audio_data: numpy.ndarray, sampling_rate) -> io.BytesIO:

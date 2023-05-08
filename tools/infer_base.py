@@ -1,21 +1,13 @@
-import io
-import os
+import logging
 import tempfile
-from io import BytesIO
 
 import librosa
-import numpy
 import numpy as np
-import sounddevice
 import soundfile
 import torch
-from gtts import gTTS
-from pydub import AudioSegment
 
 from inference.infer_tool import Svc
-import logging
-
-from . import audio_utils, tts_utils
+from . import tts_utils
 from .audio_utils import modify_speed
 
 logging.getLogger('numba').setLevel(logging.INFO)
@@ -42,10 +34,13 @@ cluster_ratio = 0  # 聚类模型混合比例，0-1之间，0即不启用聚类�
 
 
 class SvcInfer:
-    model_path = "/Users/peng/PROGRAM/GitHub/so-vits-svc/lain/G_256800_infer.pth"
-    config_path = "/Users/peng/PROGRAM/GitHub/so-vits-svc/lain/config.json"
+    model_path: str
+    config_path: str
 
-    def __init__(self):
+    def __init__(self, model_path, config_path):
+        self.model_path = model_path
+        self.config_path = config_path
+
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.svc: Svc = Svc(net_g_path=self.model_path,
                             config_path=self.config_path,
