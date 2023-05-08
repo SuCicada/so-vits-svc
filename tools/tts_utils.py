@@ -2,9 +2,8 @@ import asyncio
 import io
 from io import BytesIO
 
-import numpy as np
 from pydub import AudioSegment
-from sympy.physics.continuum_mechanics.beam import numpy
+import numpy
 
 
 def tts_with_edge_tts(text, language) -> BytesIO:
@@ -69,5 +68,5 @@ def text_to_wav(text, tts_engine="gtts", language="ja") -> (int, bytes):
 
 def text_to_audio(text, tts_engine="gtts", language="ja") -> (int, numpy.ndarray):
     sampling_rate, wav_bytes = text_to_wav(text, tts_engine, language)
-    wav: numpy.ndarray = numpy.frombuffer(wav_bytes, dtype=np.int16)
+    wav: numpy.ndarray = numpy.frombuffer(wav_bytes, dtype=numpy.int16)
     return sampling_rate, wav
