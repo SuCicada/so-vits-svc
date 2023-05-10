@@ -78,14 +78,14 @@ def modelAnalysis(model_path,config_path,cluster_model_path,device,enhance):
     global model
     try:
         device = cuda[device] if "CUDA" in device else device
-        model = Svc(model_path, config_path, device=device if device!="Auto" else None, cluster_model_path = cluster_model_path.name if cluster_model_path != None else "",nsf_hifigan_enhance=enhance)
+        model = Svc(model_path, config_path, device=device if device!="Auto" else None, cluster_model_path = cluster_model_path if cluster_model_path != None else "",nsf_hifigan_enhance=enhance)
         spks = list(model.spk2id.keys())
         device_name = torch.cuda.get_device_properties(model.dev).name if "cuda" in str(model.dev) else str(model.dev)
         msg = f"成功加载模型到设备{device_name}上\n"
         if cluster_model_path is None:
             msg += "未加载聚类模型\n"
         else:
-            msg += f"聚类模型{cluster_model_path.name}加载成功\n"
+            msg += f"聚类模型{cluster_model_path}加载成功\n"
         msg += "当前模型的可用音色：\n"
         for i in spks:
             msg += i + " "
@@ -220,7 +220,7 @@ with gr.Blocks(
                         """)
                     model_path = gr.Textbox(label="选择模型文件")
                     config_path = gr.Textbox(label="选择配置文件")
-                    cluster_model_path = gr.File(label="选择聚类模型文件（没有可以不选）")
+                    cluster_model_path = gr.Textbox(label="选择聚类模型文件（没有可以不选）")
                     device = gr.Dropdown(label="推理设备，默认为自动选择CPU和GPU", choices=["Auto",*cuda.keys(),"CPU"], value="Auto")
                     enhance = gr.Checkbox(label="是否使用NSF_HIFIGAN增强,该选项对部分训练集少的模型有一定的音质增强效果，但是对训练好的模型有反面效果，默认关闭", value=False)
                 with gr.Column():
