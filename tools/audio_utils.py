@@ -1,7 +1,9 @@
 import io
+import tempfile
 
 import numpy
 import numpy as np
+import sounddevice
 import soundfile
 from pydub import AudioSegment
 
@@ -22,9 +24,72 @@ def numpy_to_mem_file(audio_data: numpy.ndarray, sampling_rate) -> io.BytesIO:
 
 def modify_speed(audio_data: numpy.ndarray, sampling_rate, speed=1.25) -> numpy.ndarray:
     print("modify_speed", speed)
-    wav = numpy_to_mem_file(audio_data, sampling_rate, )
-    audio = AudioSegment.from_file(wav)
-    # audio = audio.set_channels(1).set_sample_width(2)  # Ensure the audio is mono and 16-bit
-    audio = audio.speedup(playback_speed=speed)
-    numpy_array = np.array(audio.get_array_of_samples())
-    return numpy_array
+    # wav = numpy_to_mem_file(audio_data, sampling_rate, )
+    with tempfile.NamedTemporaryFile(mode='w+', delete=True) as temp_file:
+        temp_path = temp_file.name
+        soundfile.write(temp_path, audio_data, sampling_rate, format="wav")
+        audio = AudioSegment.from_file(temp_path)
+        # audio = audio.set_channels(1).set_sample_width(2)  # Ensure the audio is mono and 16-bit
+        audio = audio.speedup(playback_speed=speed)
+        numpy_array = np.array(audio.get_array_of_samples())
+
+        # sounddevice.play(numpy_array, sampling_rate, blocking=True)
+
+        # return numpy_array
+        # audio = speed_change(audio, speed)
+
+        # import pyrubberband as pyrb
+        # import soundfile as sf
+        # y, sr = sf.read(temp_path)
+        # # Play back at extra low speed
+        # y_stretch = pyrb.time_stretch(y, sr, speed)
+        # # Play back extra low tones
+        # y_shift = pyrb.pitch_shift(y, sr, speed)
+        with tempfile.NamedTemporaryFile(mode='w+', delete=True) as temp_file2:
+            # sf.write(temp_file2.name, y_stretch, sr, format='wav')
+            soundfile.write(temp_file2.name, numpy_array, sampling_rate, format="wav")
+            res, _ = wav_to_numpy(temp_file2.name)
+            return res
+            # numpy_array = np.array(audio.get_array_of_samples())
+            # return numpy_array
+
+
+def speed_change(sound, speed=1.0):
+    # Manually override the frame_rate. This tells the computer how many
+    # samples to play per second
+    sound_with_altered_frame_rate = sound._spawn(sound.raw_data, overrides={
+        "frame_rate": int(sound.frame_rate * speed)
+    })
+
+    # convert the sound with altered frame rate to a standard frame rate
+    # so that regular playback programs will work right. They often only
+    # know how to play audio at standard frame rate (like 44.1k)
+    res = sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
+    return res
+
+
+import wave
+import numpy as np
+
+
+def wav_to_numpy(file_path):
+    with wave.open(file_path, "rb") as wav_file:
+        # Get the audio file parameters
+        channels = wav_file.getnchannels()
+        # sample_width = wav_file.getsampwidth()
+        sample_rate = wav_file.getframerate()
+        num_frames = wav_file.getnframes()
+        # Read the audio data from the WAV file
+        audio_data = wav_file.readframes(num_frames)
+        # Convert the audio data to a NumPy array
+        audio_numpy = np.frombuffer(audio_data, dtype=np.int16)
+        # Reshape the NumPy array based on the number of channels
+        audio_numpy = np.reshape(audio_numpy, (num_frames, channels))
+        return audio_numpy, sample_rate
+
+# if __name__ == '__main__':
+# audio_numpy, sample_rate = wav_to_numpy("tmpmom974j6.wav")
+# audio_numpy = modify_speed(audio_numpy, sample_rate, 1.1)
+#
+# # fast_sound = speed_change(sound, 1.1)
+# soundfile.write("out.wav", audio_numpy, sample_rate, format="wav")

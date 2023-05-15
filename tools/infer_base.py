@@ -63,6 +63,7 @@ class SvcInfer:
         target_sampling_rate, target_audio = self.transform_audio(sampling_rate, audio, **options)
         if speed != 1.0:
             target_audio = modify_speed(target_audio, sampling_rate, speed)
+        soundfile.write("out.wav", target_audio, target_sampling_rate, format="wav")
         return (origin_sampling_rate, origin_audio), (target_sampling_rate, target_audio)
 
     def transform_audio(self, sampling_rate, audio: np.array, **options) -> (int, np.array):

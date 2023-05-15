@@ -18,13 +18,13 @@ lain_download:
 			$(lain_dir)/kmeans_10000.pt, \
 			https://huggingface.co/SuCicada/Lain-so-vits-svc-4.0/resolve/main/kmeans_10000.pt)
 
-lain_gradio_cmd = $(conda_run) python tools/lain_gradio.py \
+_lain_gradio_cmd = $(conda_run) python tools/lain_gradio.py \
       --model_path $(lain_dir)/G_256800_infer.pth \
       --config_path $(lain_dir)/config.json \
       --cluster_model_path $(lain_dir)/kmeans_10000.pt
 
 lain_gradio_run:
-	$(lain_gradio_cmd)
+	$(_lain_gradio_cmd)
 lain_gradio_debug:
-	$(lain_gradio_cmd) --debug
+	$(_lain_gradio_cmd) --debug
 

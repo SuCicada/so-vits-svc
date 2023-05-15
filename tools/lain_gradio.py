@@ -25,9 +25,10 @@ class VitsGradio:
 
     def __init__(self):
         with gr.Blocks() as self.Vits:
-            gr.Markdown("# Lain TTS with so-vits-svc-4.0 ")
+            gr.Markdown("<h1 style='text-align: center;'> Lain TTS with so-vits-svc-4.0 </h1>")
+            gr.Markdown("<h2 style='text-align: center;'> Serial Experiments Lain </h1>")
             gr.Markdown(
-                "## web source in: [SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/blob/4.0/tools/vits_gradio.py) ")
+                "## web source in: [SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/blob/4.0/tools/lain_gradio.py) ")
             gr.Markdown(
                 "## Models in: [SuCicada/Lain-so-vits-svc-4.0](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.0/tree/main) ")
 
@@ -35,7 +36,9 @@ class VitsGradio:
                 with gr.TabItem("tts"):
                     with gr.Row() as self.VoiceConversion:
                         self.text = gr.Textbox(label="input text", lines=5,
-                                               value="こんにちは、私は人工知能です。私は、あなたの声を聞くことができます。")
+                                               value="人はみな、繋がっている。\n"
+                                                     "リアルワールドとコンピュータネットワーク・ワイヤード。\n"
+                                                     "シリアル　エクスペリメンツ　レイン。")
                     with gr.Row():
                         with gr.Column():
                             with gr.Row():
@@ -58,10 +61,11 @@ class VitsGradio:
 
                     self.svc_target_output: gr.Audio = gr.Audio(label="lain voice")
 
+            gr.Markdown("## If you don't know what the following means, please don't change it.")
             with gr.Row(variant="panel"):
                 with gr.Column():
                     gr.Markdown(value="""
-                        <font size=2> 推理设置</font>
+                        <font size=2> 推理设置 </font>
                         """)
                     auto_predict_f0 = gr.Checkbox(
                         label="自动f0预测，配合聚类模型f0预测效果更好,会导致变调功能失效（仅限转换语音，歌声勾选此项会究极跑调）",
