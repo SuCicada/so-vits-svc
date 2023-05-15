@@ -2,8 +2,6 @@ import io
 import tempfile
 
 import numpy
-import numpy as np
-import sounddevice
 import soundfile
 from pydub import AudioSegment
 
