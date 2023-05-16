@@ -42,11 +42,11 @@ class VitsGradio:
                     with gr.Row():
                         with gr.Column():
                             with gr.Row():
-                                self.tts_engine = gr.inputs.Dropdown(["edge-tts", "gtts", ], default="edge-tts",
+                                self.tts_engine = gr.inputs.Dropdown(["edge-tts", "gtts", ], default="gtts",
                                                                      label="tts engine")
                                 self.language = gr.inputs.Dropdown(["ja", "en", "zh", ], default="ja",
                                                                    label="language")
-                                self.speed = gr.inputs.Slider(minimum=0, maximum=2, step=0.1, default=1,
+                                self.speed = gr.inputs.Slider(minimum=0, maximum=2, step=0.1, default=1.1,
                                                               label="speed")
 
                             self.tts_submit = gr.Button("Transform")
