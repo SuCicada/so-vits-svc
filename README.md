@@ -9,6 +9,10 @@ However, there are still other enthusiasts who have created their own branches a
 
 #### This project is fundamentally different from Vits. Vits is TTS and this project is SVC. TTS cannot be carried out in this project, and Vits cannot carry out SVC, and the two project models are not universal
 
+## Announcement
+
+The project was developed to allow the developers' favorite anime characters to sing, Anything involving real people is a departure from the intent of the developer.
+
 ## Disclaimer
 
 This project is an open source, offline project, and all members of SvcDevelopTeam and all developers and maintainers of this project (hereinafter referred to as contributors) have no control over this project.  The contributor of this project has never provided any organization or individual with any form of assistance, including but not limited to data set extraction, data set processing, computing support, training support, infering, etc.  Contributors to the project do not and cannot know what users are using the project for.  Therefore, all AI models and synthesized audio based on the training of this project have nothing to do with the contributors of this project.  All problems arising therefrom shall be borne by the user.
@@ -38,7 +42,7 @@ This project is only a framework project, which does not have the function of sp
 | :-------------: | :----------: | :------------:    |
 | 4.0              |   main branch   |        -     |
 | 4.0v2        |  The VISinger2 model is used  |        incompatibility     |
-| 4.0-Vec768-Layer12    |  The feature input is the Layer 12 Transformer output of the Content Vec  |       incompatibility     |
+| 4.0-Vec768-Layer12    |  The feature input is the Layer 12 Transformer output of the Content Vec  |      Compatible after the configuration file is modified     |
 
 ## 📝 Model Introduction
 
@@ -243,6 +247,9 @@ Use [onnx_export.py](https://github.com/svc-develop-team/so-vits-svc/blob/4.0/on
 Note: For Hubert Onnx models, please use the models provided by MoeSS. Currently, they cannot be exported on their own (Hubert in fairseq has many unsupported operators and things involving constants that can cause errors or result in problems with the input/output shape and results when exported.)
 
 CppDataProcess are some functions to preprocess data used in MoeSS
+
+## 🤔The relationship between original project(so-vits-svc by original author), this project and so-vits-svc-5.0
+If the original project is equivalent to the Roman Empire, This project is Eastern Roman Empire(The Byzantine Empire) and so-vits-svc-5.0 is Kingdom of Romania
 
 ## ☀️ Previous contributors
 
