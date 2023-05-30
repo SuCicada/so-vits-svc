@@ -1,0 +1,18 @@
+gradio==3.32.0
+edge_tts
+gtts
+
+soundfile
+
+# sklearn
+scikit-learn
+
+librosa
+
+torch
+torchaudio
+
+fairseq
+praat-parselmouth
+scipy==1.10.1
+ffmpeg-python
