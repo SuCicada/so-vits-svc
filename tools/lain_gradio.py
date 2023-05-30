@@ -11,7 +11,7 @@ from gradio import networking, utils
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 from tools.infer_base import SvcInfer
-from tools import infer_base
+from tools import infer_base, audio_utils
 
 logging.getLogger('markdown_it').setLevel(logging.INFO)
 
@@ -57,9 +57,11 @@ class VitsGradio:
                 with gr.TabItem("svc"):
                     with gr.TabItem("voice to voice"):
                         self.svc_input_audio = gr.Audio(label="choose audio file")
+                        self.svc_input_bgm = gr.Audio(label="choose bgm file")
                         self.vc_submit = gr.Button("voice conversion", variant="primary")
 
-                    self.svc_target_output: gr.Audio = gr.Audio(label="lain voice")
+                    self.svc_target_output: gr.Audio = gr.Audio(label="lain voice only")
+                    self.merge_target_output: gr.Audio = gr.Audio(label="lain voice with bgm")
 
             gr.Markdown("## If you don't know what the following means, please don't change it.")
             with gr.Row(variant="panel"):
@@ -112,11 +114,12 @@ class VitsGradio:
 
             self.vc_submit.click(
                 self.vc_submit_func,
-                inputs=[self.svc_input_audio,
+                inputs=[self.svc_input_audio, self.svc_input_bgm,
                         auto_predict_f0, F0_mean_pooling, tran, cluster_infer_ratio, slice_db, noice_scale,
                         pad_seconds, clip_seconds, lg_num, lgr_num, enhancer_adaptive_key, cr_threshold],
                 outputs=[
                     self.svc_target_output,
+                    self.merge_target_output,
                 ])
 
     def test(self, text, tts_engine):
@@ -151,29 +154,36 @@ class VitsGradio:
             cr_threshold=cr_threshold)
         return res
 
-    def vc_submit_func(self, svc_input_audio,
+    def vc_submit_func(self, svc_input_audio, svc_input_bgm,
                        auto_predict_f0, F0_mean_pooling, tran, cluster_infer_ratio, slice_db, noice_scale,
                        pad_seconds, clip_seconds, lg_num, lgr_num, enhancer_adaptive_key, cr_threshold):
         print(svc_input_audio)
         if self.svc_infer is None:
             self.svc_infer = new_svc_infer()
         sampling_rate, audio = svc_input_audio
-        res = self.svc_infer.transform_audio(sampling_rate, audio,
+        target_sampling_rate, target_audio = self.svc_infer.transform_audio(
+            sampling_rate, audio,
 
-                                             auto_predict_f0=auto_predict_f0,
-                                             F0_mean_pooling=F0_mean_pooling,
-                                             tran=tran,
-                                             cluster_infer_ratio=cluster_infer_ratio,
-                                             slice_db=slice_db,
-                                             noice_scale=noice_scale,
+            auto_predict_f0=auto_predict_f0,
+            F0_mean_pooling=F0_mean_pooling,
+            tran=tran,
+            cluster_infer_ratio=cluster_infer_ratio,
+            slice_db=slice_db,
+            noice_scale=noice_scale,
 
-                                             pad_seconds=pad_seconds,
-                                             clip_seconds=clip_seconds,
-                                             lg_num=lg_num,
-                                             lgr_num=lgr_num,
-                                             enhancer_adaptive_key=enhancer_adaptive_key,
-                                             cr_threshold=cr_threshold)
-        return res
+            pad_seconds=pad_seconds,
+            clip_seconds=clip_seconds,
+            lg_num=lg_num,
+            lgr_num=lgr_num,
+            enhancer_adaptive_key=enhancer_adaptive_key,
+            cr_threshold=cr_threshold)
+
+        if svc_input_bgm:
+            bgm_sampling_rate, bgm_audio = svc_input_bgm
+            combined_sampling_rate, combined_audio = audio_utils.merge_audio((target_sampling_rate, target_audio),
+                                                                             (bgm_sampling_rate, bgm_audio))
+
+        return ((target_sampling_rate, target_audio), (combined_sampling_rate, combined_audio))
 
 
 print(sys.argv)
@@ -181,6 +191,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model_path', type=str, help='model_path')
 parser.add_argument('--config_path', type=str, help='config_path')
 parser.add_argument('--cluster_model_path', type=str, help='cluster_model_path')
+parser.add_argument("--hubert_model_path", type=str, help='hubert_model_path')
 parser.add_argument('--debug', action='store_true', help='debug')
 args = parser.parse_args()
 
@@ -188,7 +199,9 @@ args = parser.parse_args()
 def new_svc_infer():
     return SvcInfer(model_path=args.model_path,
                     config_path=args.config_path,
-                    cluster_model_path=args.cluster_model_path)
+                    cluster_model_path=args.cluster_model_path,
+                    hubert_model_path=args.hubert_model_path
+                    )
 
 
 grVits = VitsGradio()
@@ -218,7 +231,6 @@ def main():
         uvicorn.run(f"{filename}:demo.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
     else:
         demo.launch()
-
 
 if __name__ == '__main__':
     main()

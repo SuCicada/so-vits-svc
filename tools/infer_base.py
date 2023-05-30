@@ -7,7 +7,7 @@ import soundfile
 import torch
 
 from inference.infer_tool import Svc
-from . import tts_utils
+from . import tts_utils,file_util
 from .audio_utils import modify_speed
 
 logging.getLogger('numba').setLevel(logging.INFO)
@@ -27,8 +27,8 @@ F0_mean_pooling = False  # 是否对F0使用均值滤波器(池化)，对部分�
 
 # not suggest to modify
 sid = "lain"
-slice_db = -40
-noice_scale = 0.4
+slice_db = -40  # 切片阈值
+noice_scale = 0.4  # noise_scale 建议不要动，会影响音质，玄学参数
 
 enhancer_adaptive_key = 0  # "使增强器适应更高的音域(单位为半音数)|默认为0"
 
@@ -38,17 +38,15 @@ class SvcInfer:
     config_path: str
     cluster_model_path: str
 
-    def __init__(self, model_path, config_path, cluster_model_path):
-        self.model_path = model_path
-        self.config_path = config_path
-        self.cluster_model_path = cluster_model_path
+    def __init__(self, model_path, config_path, cluster_model_path,hubert_model_path):
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.svc: Svc = Svc(net_g_path=self.model_path,
-                            config_path=self.config_path,
+        self.svc: Svc = Svc(net_g_path=model_path,
+                            config_path=config_path,
                             device=device,
                             cluster_model_path=cluster_model_path,
-                            nsf_hifigan_enhance=False)
+                            nsf_hifigan_enhance=False,
+                            hubert_model_path=hubert_model_path)
 
     def get_audio(self, text,
                   tts_engine="edge-tts",
@@ -62,7 +60,7 @@ class SvcInfer:
 
         target_sampling_rate, target_audio = self.transform_audio(sampling_rate, audio, **options)
         if speed != 1.0:
-            target_audio = modify_speed(target_audio, sampling_rate, speed)
+            target_audio = modify_speed(sampling_rate,target_audio,  speed)
         soundfile.write("out.wav", target_audio, target_sampling_rate, format="wav")
         return (origin_sampling_rate, origin_audio), (target_sampling_rate, target_audio)
 
@@ -71,8 +69,9 @@ class SvcInfer:
         audio = (audio / np.iinfo(audio.dtype).max).astype(np.float32)
         if len(audio.shape) > 1:
             audio = librosa.to_mono(audio.transpose(1, 0))
-        with tempfile.NamedTemporaryFile(mode='w+', delete=True) as temp_file:
-            temp_path = temp_file.name
+        with file_util.MyNamedTemporaryFile() as temp_path:
+        # _，tmp_filetempfile.mkstemp()
+            # temp_path = temp_file.name
             soundfile.write(temp_path, audio, sampling_rate, format="wav")
             # os.remove(temp_path)
             target_sampling_rate, target_audio = transform_audio(temp_path, self.svc, **options)

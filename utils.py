@@ -207,17 +207,20 @@ def f0_to_coarse(f0):
   return f0_coarse
 
 
-def get_hubert_model():
-  vec_path = os.path.join(os.path.dirname(__file__),"hubert/checkpoint_best_legacy_500.pt")
-  print("load model(s) from {}".format(vec_path))
-  from fairseq import checkpoint_utils
-  models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task(
-    [vec_path],
-    suffix="",
-  )
-  model = models[0]
-  model.eval()
-  return model
+def get_hubert_model(hubert_model_path=None):
+    if hubert_model_path is None:
+        vec_path = os.path.join(os.path.dirname(__file__), "hubert/checkpoint_best_legacy_500.pt")
+    else:
+        vec_path = hubert_model_path
+    print("load model(s) from {}".format(vec_path))
+    from fairseq import checkpoint_utils
+    models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task(
+        [vec_path],
+        suffix="",
+    )
+    model = models[0]
+    model.eval()
+    return model
 
 def get_hubert_content(hmodel, wav_16k_tensor):
   feats = wav_16k_tensor

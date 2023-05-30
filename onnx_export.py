@@ -3,7 +3,7 @@ from onnxexport.model_onnx import SynthesizerTrn
 import utils
 
 def main(NetExport):
-    path = "SoVits4.0"
+    path = "lain"
     if NetExport:
         device = torch.device("cpu")
         hps = utils.get_hparams_from_file(f"checkpoints/{path}/config.json")
@@ -15,10 +15,10 @@ def main(NetExport):
         _ = SVCVITS.eval().to(device)
         for i in SVCVITS.parameters():
             i.requires_grad = False
-        
+
         n_frame = 10
         hidden_channels = 256  #(Hubert's shape[2])
-        
+
         test_hidden_unit = torch.rand(1, n_frame, hidden_channels)
         test_pitch = torch.rand(1, n_frame)
         test_mel2ph = torch.arange(0, n_frame, dtype=torch.int64)[None] # torch.LongTensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).unsqueeze(0)
@@ -27,7 +27,7 @@ def main(NetExport):
         test_sid = torch.LongTensor([0])
         input_names = ["c", "f0", "mel2ph", "uv", "noise", "sid"]
         output_names = ["audio", ]
-        
+
         torch.onnx.export(SVCVITS,
                           (
                               test_hidden_unit.to(device),

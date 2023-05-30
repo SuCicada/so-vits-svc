@@ -1,3 +1,4 @@
+import gc
 import hashlib
 import io
 import json
@@ -5,20 +6,15 @@ import logging
 import os
 import time
 from pathlib import Path
-from inference import slicer
-import gc
 
 import librosa
 import numpy as np
-# import onnxruntime
-import parselmouth
 import soundfile
 import torch
-import torchaudio
 
 import cluster
-from hubert import hubert_model
 import utils
+from inference import slicer
 from models import SynthesizerTrn
 
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
@@ -103,7 +99,7 @@ def pad_array(arr, target_length):
         pad_right = pad_width - pad_left
         padded_arr = np.pad(arr, (pad_left, pad_right), 'constant', constant_values=(0, 0))
         return padded_arr
-    
+
 def split_list_by_n(list_collection, n, pre=0):
     for i in range(0, len(list_collection), n):
         yield list_collection[i-pre if i-pre>=0 else i: i + n]
@@ -116,7 +112,8 @@ class Svc(object):
     def __init__(self, net_g_path, config_path,
                  device=None,
                  cluster_model_path="logs/44k/kmeans_10000.pt",
-                 nsf_hifigan_enhance = False
+                 nsf_hifigan_enhance = False,
+                 hubert_model_path=None,
                  ):
         self.net_g_path = net_g_path
         if device is None:
@@ -130,7 +127,7 @@ class Svc(object):
         self.spk2id = self.hps_ms.spk
         self.nsf_hifigan_enhance = nsf_hifigan_enhance
         # load hubert
-        self.hubert_model = utils.get_hubert_model().to(self.dev)
+        self.hubert_model = utils.get_hubert_model(hubert_model_path).to(self.dev)
         self.load_model()
         if os.path.exists(cluster_model_path):
             self.cluster_model = cluster.get_cluster_model(cluster_model_path)
@@ -210,10 +207,10 @@ class Svc(object):
             audio = self.net_g_ms.infer(c, f0=f0, g=sid, uv=uv, predict_f0=auto_predict_f0, noice_scale=noice_scale)[0,0].data.float()
             if self.nsf_hifigan_enhance:
                 audio, _ = self.enhancer.enhance(
-                                                                        audio[None,:], 
-                                                                        self.target_sample, 
-                                                                        f0[:,:,None], 
-                                                                        self.hps_ms.data.hop_length, 
+                                                                        audio[None,:],
+                                                                        self.target_sample,
+                                                                        f0[:,:,None],
+                                                                        self.hps_ms.data.hop_length,
                                                                         adaptive_key = enhancer_adaptive_key)
             use_time = time.time() - start
             print("vits use time:{}".format(use_time))
@@ -227,7 +224,7 @@ class Svc(object):
         # unload model
         self.net_g_ms = self.net_g_ms.to("cpu")
         del self.net_g_ms
-        if hasattr(self,"enhancer"): 
+        if hasattr(self,"enhancer"):
             self.enhancer.enhancer = self.enhancer.enhancer.to("cpu")
             del self.enhancer.enhancer
             del self.enhancer
@@ -258,7 +255,7 @@ class Svc(object):
         lg_size_c_l = (lg_size-lg_size_r)//2
         lg_size_c_r = lg_size-lg_size_r-lg_size_c_l
         lg = np.linspace(0,1,lg_size_r) if lg_size!=0 else 0
-        
+
         audio = []
         for (slice_tag, data) in audio_data:
             print(f'#=====segment start, {round(len(data) / audio_sr, 3)}s======')
@@ -304,51 +301,3 @@ class Svc(object):
                 audio.extend(list(_audio))
         return np.array(audio)
 
-class RealTimeVC:
-    def __init__(self):
-        self.last_chunk = None
-        self.last_o = None
-        self.chunk_len = 16000  # chunk length
-        self.pre_len = 3840  # cross fade length, multiples of 640
-
-    # Input and output are 1-dimensional numpy waveform arrays
-
-    def process(self, svc_model, speaker_id, f_pitch_change, input_wav_path,
-                cluster_infer_ratio=0,
-                auto_predict_f0=False,
-                noice_scale=0.4,
-                f0_filter=False):
-
-        import maad
-        audio, sr = torchaudio.load(input_wav_path)
-        audio = audio.cpu().numpy()[0]
-        temp_wav = io.BytesIO()
-        if self.last_chunk is None:
-            input_wav_path.seek(0)
-
-            audio, sr = svc_model.infer(speaker_id, f_pitch_change, input_wav_path,
-                                        cluster_infer_ratio=cluster_infer_ratio,
-                                        auto_predict_f0=auto_predict_f0,
-                                        noice_scale=noice_scale,
-                                        f0_filter=f0_filter)
-
-            audio = audio.cpu().numpy()
-            self.last_chunk = audio[-self.pre_len:]
-            self.last_o = audio
-            return audio[-self.chunk_len:]
-        else:
-            audio = np.concatenate([self.last_chunk, audio])
-            soundfile.write(temp_wav, audio, sr, format="wav")
-            temp_wav.seek(0)
-
-            audio, sr = svc_model.infer(speaker_id, f_pitch_change, temp_wav,
-                                        cluster_infer_ratio=cluster_infer_ratio,
-                                        auto_predict_f0=auto_predict_f0,
-                                        noice_scale=noice_scale,
-                                        f0_filter=f0_filter)
-
-            audio = audio.cpu().numpy()
-            ret = maad.util.crossfade(self.last_o, audio, self.pre_len)
-            self.last_chunk = audio[-self.pre_len:]
-            self.last_o = audio
-            return ret[self.chunk_len:2 * self.chunk_len]

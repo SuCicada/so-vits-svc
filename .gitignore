@@ -153,3 +153,8 @@ filelists/train.txt
 filelists/val.txt
 
 .idea
+*.iml
+*.wav
+*.flac
+*.pth
+models/
