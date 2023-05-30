@@ -38,7 +38,7 @@ class SvcInfer:
     config_path: str
     cluster_model_path: str
 
-    def __init__(self, model_path, config_path, cluster_model_path,hubert_model_path):
+    def __init__(self, model_path, config_path, cluster_model_path, hubert_model_path):
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.svc: Svc = Svc(net_g_path=model_path,

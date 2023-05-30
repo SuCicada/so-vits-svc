@@ -14,6 +14,7 @@ from tools.infer_base import SvcInfer
 from tools import infer_base, audio_utils
 
 logging.getLogger('markdown_it').setLevel(logging.INFO)
+logging.getLogger('urllib3.connectionpool').setLevel(logging.INFO)
 
 # sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 print(sys.path)
@@ -182,8 +183,9 @@ class VitsGradio:
             bgm_sampling_rate, bgm_audio = svc_input_bgm
             combined_sampling_rate, combined_audio = audio_utils.merge_audio((target_sampling_rate, target_audio),
                                                                              (bgm_sampling_rate, bgm_audio))
-
-        return ((target_sampling_rate, target_audio), (combined_sampling_rate, combined_audio))
+        else:
+            combined_sampling_rate, combined_audio = (target_sampling_rate, target_audio)
+        return (target_sampling_rate, target_audio), (combined_sampling_rate, combined_audio)
 
 
 print(sys.argv)
@@ -192,6 +194,7 @@ parser.add_argument('--model_path', type=str, help='model_path')
 parser.add_argument('--config_path', type=str, help='config_path')
 parser.add_argument('--cluster_model_path', type=str, help='cluster_model_path')
 parser.add_argument("--hubert_model_path", type=str, help='hubert_model_path')
+parser.add_argument("--port", type=int, help='port')
 parser.add_argument('--debug', action='store_true', help='debug')
 args = parser.parse_args()
 
@@ -220,9 +223,7 @@ def main():
         path = path.replace("/", ".")
         path = path.replace("\\", ".")
         filename = os.path.splitext(path)[0]
-        from pathlib import Path
-        import inspect
-        import gradio
+
 
         # gradio_folder = Path(inspect.getfile(gradio)).parent
         abs_parent: str = str(abs_original_path.parent)
@@ -230,7 +231,13 @@ def main():
         print("filename", filename, abs_parent)
         uvicorn.run(f"{filename}:demo.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
     else:
-        demo.launch()
+        demo.launch(server_port=args.port,prevent_thread_lock=True)
+    print("=====================================")
+    print(f"server start at: http://127.0.0.1:{demo.server_port}")
+    print("please open the url in your browser")
+    print("enjoy it!")
+    print("=====================================")
+    demo.block_thread()
 
 if __name__ == '__main__':
     main()
