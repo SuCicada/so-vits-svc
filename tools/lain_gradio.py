@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import webbrowser
 from types import SimpleNamespace
 
 import gradio as gr
@@ -196,6 +197,7 @@ parser.add_argument('--cluster_model_path', type=str, help='cluster_model_path')
 parser.add_argument("--hubert_model_path", type=str, help='hubert_model_path')
 parser.add_argument("--port", type=int, help='port')
 parser.add_argument('--debug', action='store_true', help='debug')
+parser.add_argument('--inbrowser', action='store_true', help='inbrowser')
 args = parser.parse_args()
 
 
@@ -216,7 +218,7 @@ def main():
         port = networking.get_first_available_port(
             networking.INITIAL_PORT_VALUE,
             networking.INITIAL_PORT_VALUE + networking.TRY_NUM_PORTS,
-        )
+            )
         original_path = sys.argv[0]
         abs_original_path = utils.abspath(original_path)
         path = os.path.normpath(original_path)
@@ -224,20 +226,22 @@ def main():
         path = path.replace("\\", ".")
         filename = os.path.splitext(path)[0]
 
-
         # gradio_folder = Path(inspect.getfile(gradio)).parent
         abs_parent: str = str(abs_original_path.parent)
 
         print("filename", filename, abs_parent)
         uvicorn.run(f"{filename}:demo.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
     else:
-        demo.launch(server_port=args.port,prevent_thread_lock=True)
+        demo.launch(server_port=args.port, prevent_thread_lock=True)
     print("=====================================")
     print(f"server start at: http://127.0.0.1:{demo.server_port}")
     print("please open the url in your browser")
     print("enjoy it!")
     print("=====================================")
+    if args.inbrowser:
+        webbrowser.open(demo.local_url)# + "?__theme=dark"
     demo.block_thread()
+
 
 if __name__ == '__main__':
     main()
