@@ -1,6 +1,6 @@
 reference:
 - [Makefile](Makefile)
-- [sumake]
+- [sumake](https://github.com/SuCicada/sumake)
 
 ```bash
 
