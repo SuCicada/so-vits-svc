@@ -29,3 +29,5 @@ lain_gradio_run:
 lain_gradio_debug:
 	$(_lain_gradio_cmd) --debug
 
+lain_server:
+	$(conda_run) python tools/server.py
