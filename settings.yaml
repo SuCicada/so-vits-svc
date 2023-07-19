@@ -1,0 +1,21 @@
+sovits_params:
+  log_interval: 200
+  eval_interval: 800
+  keep_ckpts: 10
+  batch_size: 6
+  learning_rate: 0.0001
+  amp_dtype: fp32
+  all_in_mem: false
+diff_params:
+  num_workers: 2
+  cache_all_data: false
+  cache_device: cpu
+  amp_dtype: fp32
+  diff_batch_size: 48
+  diff_lr: 0.0002
+  diff_interval_log: 10
+  diff_interval_val: 2000
+  diff_force_save: 2000
+  diff_k_step_max: false
+webui_settings:
+  second_dir: false
