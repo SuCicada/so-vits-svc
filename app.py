@@ -534,11 +534,12 @@ def tts_fn(_text, _gender, _lang, _rate, _volume, output_format, sid, vc_transfo
                 return "你还未加载聚类或特征检索模型，无法启用聚类/特征检索混合比例", None
         _rate = f"+{int(_rate*100)}%" if _rate >= 0 else f"{int(_rate*100)}%"
         _volume = f"+{int(_volume*100)}%" if _volume >= 0 else f"{int(_volume*100)}%"
+        cmd = [r"python", "tools/infer/tts.py", _text, _lang, _rate, _volume]
         if _lang == "Auto":
             _gender = "Male" if _gender == "男" else "Female"
-            subprocess.run([r".\workenv\python.exe", "tts.py", _text, _lang, _rate, _volume, _gender])
+            subprocess.run([*cmd, _gender])
         else:
-            subprocess.run([r".\workenv\python.exe", "tts.py", _text, _lang, _rate, _volume])
+            subprocess.run(cmd)
         target_sr = 44100
         y, sr = librosa.load("tts.wav")
         resampled_y = librosa.resample(y, orig_sr=sr, target_sr=target_sr)
