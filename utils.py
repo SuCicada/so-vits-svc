@@ -98,7 +98,7 @@ def get_f0_predictor(f0_predictor,hop_length,sampling_rate,**kargs):
         f0_predictor_object = HarvestF0Predictor(hop_length=hop_length,sampling_rate=sampling_rate)
     elif f0_predictor == "dio":
         from modules.F0Predictor.DioF0Predictor import DioF0Predictor
-        f0_predictor_object = DioF0Predictor(hop_length=hop_length,sampling_rate=sampling_rate) 
+        f0_predictor_object = DioF0Predictor(hop_length=hop_length,sampling_rate=sampling_rate)
     elif f0_predictor == "rmvpe":
         from modules.F0Predictor.RMVPEF0Predictor import RMVPEF0Predictor
         f0_predictor_object = RMVPEF0Predictor(hop_length=hop_length,sampling_rate=sampling_rate,dtype=torch.float32 ,device=kargs["device"],threshold=kargs["threshold"])
@@ -148,9 +148,9 @@ def get_speech_encoder(speech_encoder,device=None,**kargs):
         speech_encoder_object = WavLMBasePlus(device = device)
     else:
         raise Exception("Unknown speech encoder")
-    return speech_encoder_object 
+    return speech_encoder_object
 
-def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False):
+def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False, strict=True):
     assert os.path.isfile(checkpoint_path)
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     iteration = checkpoint_dict['iteration']
@@ -159,6 +159,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
         optimizer.load_state_dict(checkpoint_dict['optimizer'])
     saved_state_dict = checkpoint_dict['model']
     model = model.to(list(saved_state_dict.values())[0].dtype)
+    print(f"load {checkpoint_path}")
     if hasattr(model, 'module'):
         state_dict = model.module.state_dict()
     else:
@@ -172,7 +173,8 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
             assert saved_state_dict[k].shape == v.shape, (saved_state_dict[k].shape, v.shape)
         except Exception:
             if "enc_q" not in k or "emb_g" not in k:
-              print("%s is not in the checkpoint,please check your checkpoint.If you're using pretrain model,just ignore this warning." % k)
+              if not strict:
+                print("%s is not in the checkpoint,please check your checkpoint.If you're using pretrain model,just ignore this warning." % k)
               logger.info("%s is not in the checkpoint" % k)
               new_state_dict[k] = v
     if hasattr(model, 'module'):
@@ -434,7 +436,7 @@ def mix_model(model_paths,mix_rate,mode):
         model_tem["model"][k] += model[k]*mix_rate[i]
   torch.save(model_tem,os.path.join(os.path.curdir,"output.pth"))
   return os.path.join(os.path.curdir,"output.pth")
-  
+
 def change_rms(data1, sr1, data2, sr2, rate):  # 1是输入音频，2是输出音频,rate是2的占比 from RVC
     # print(data1.max(),data2.max())
     rms1 = librosa.feature.rms(
@@ -543,7 +545,7 @@ class HParams():
   def get(self,index):
     return self.__dict__.get(index)
 
-  
+
 class InferHParams(HParams):
   def __init__(self, **kwargs):
     for k, v in kwargs.items():
@@ -558,7 +560,7 @@ class InferHParams(HParams):
 class Volume_Extractor:
     def __init__(self, hop_size = 512):
         self.hop_size = hop_size
-        
+
     def extract(self, audio): # audio: 2d tensor array
         if not isinstance(audio,torch.Tensor):
            audio = torch.Tensor(audio)

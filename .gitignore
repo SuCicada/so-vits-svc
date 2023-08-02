@@ -168,3 +168,8 @@ trained/**/
 models/
 pre_trained_model/
 *.wav
+
+.idea
+*.iml
+*.flac
+*.pth
