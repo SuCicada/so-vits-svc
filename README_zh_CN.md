@@ -1,12 +1,21 @@
+<div align="center">
+<img alt="LOGO" src="https://avatars.githubusercontent.com/u/127122328?s=400&u=5395a98a4f945a3a50cb0cc96c2747505d190dbc&v=4" width="300" height="300" />
+
 # SoftVC VITS Singing Voice Conversion
 
 [**English**](./README.md) | [**中文简体**](./README_zh_CN.md)
 
-#### ✨ 带有 F0 曲线编辑器，角色混合时间轴编辑器的推理端 (Onnx 模型的用途） : [MoeVoiceStudio](https://github.com/NaruseMioShirakana/MoeVoiceStudio)
+[![在Google Cloab中打开](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/github/svc-develop-team/so-vits-svc/blob/4.1-Stable/sovits4_for_colab.ipynb)
+[![LICENSE](https://img.shields.io/badge/LICENSE-AGPL3.0-green.svg?style=for-the-badge)](https://github.com/svc-develop-team/so-vits-svc/blob/4.1-Stable/LICENSE)
 
-#### ✨ 改善了交互的一个分支推荐：[34j/so-vits-svc-fork](https://github.com/34j/so-vits-svc-fork)
+</div>
 
-#### ✨ 支持实时转换的一个客户端：[w-okada/voice-changer](https://github.com/w-okada/voice-changer)
+
+#### ✨ 带有 F0 曲线编辑器，角色混合时间轴编辑器的推理端 (Onnx 模型的用途）: [MoeVoiceStudio](https://github.com/NaruseMioShirakana/MoeVoiceStudio)
+
+#### ✨ 改善了交互的一个分支推荐: [34j/so-vits-svc-fork](https://github.com/34j/so-vits-svc-fork)
+
+#### ✨ 支持实时转换的一个客户端: [w-okada/voice-changer](https://github.com/w-okada/voice-changer)
 
 **本项目与 Vits 有着根本上的不同。Vits 是 TTS，本项目是 SVC。本项目无法实现 TTS，Vits 也无法实现 SVC，这两个项目的模型是完全不通用的。**
 
@@ -134,7 +143,7 @@ wget -P pretrain/ https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/mai
 + 预训练底模文件： `G_0.pth` `D_0.pth`
   + 放在`logs/44k`目录下
 
-+ 扩散模型预训练底模文件： `model_0.pt `
++ 扩散模型预训练底模文件： `model_0.pt`
   + 放在`logs/44k/diffusion`目录下
 
 从 svc-develop-team（待定）或任何其他地方获取 Sovits 底模
@@ -165,6 +174,17 @@ unzip -od pretrain/nsf_hifigan pretrain/nsf_hifigan_20221211.zip
 如果使用`rmvpe`F0预测器的话，需要下载预训练的 RMVPE 模型
 
 + 下载模型 [rmvpe.pt](https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/rmvpe.pt)
+  + 放在`pretrain`目录下
+
+##### FCPE(预览版)
+
+> 你说的对,但是[FCPE](https://github.com/CNChTu/MelPE)是由svc-develop-team自主研发的一款全新的F0预测器，后面忘了
+
+[FCPE(Fast Context-base Pitch Estimator)](https://github.com/CNChTu/MelPE)是一个为实时语音转换所设计的专用F0预测器，他将在未来成为Sovits实时语音转换的首选F0预测器.（论文未来会有的）
+
+如果使用 `fcpe` F0预测器的话，需要下载预训练的 FCPE 模型
+
++ 下载模型 [fcpe.pt](https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/fcpe.pt)
   + 放在`pretrain`目录下
 
 
@@ -251,7 +271,6 @@ wavlmbase+
 ```shell
 python preprocess_flist_config.py --speech_encoder vec768l12 --vol_aug
 ```
-
 使用后训练出的模型将匹配到输入源响度，否则为训练集响度。
 
 #### 此时可以在生成的 config.json 与 diffusion.yaml 修改部分参数
@@ -299,6 +318,7 @@ dio
 pm
 harvest
 rmvpe
+fcpe
 ```
 
 如果训练集过于嘈杂，请使用 crepe 处理 f0
@@ -310,6 +330,13 @@ rmvpe
 ```shell
 python preprocess_hubert_f0.py --f0_predictor dio --use_diff
 ```
+
+**加速预处理**
+如若您的数据集比较大，可以尝试添加`--num_processes`参数：
+```shell
+python preprocess_hubert_f0.py --f0_predictor dio --use_diff --num_processes 8
+```
+所有的Workers会被自动分配到多个线程上
 
 执行完以上步骤后 dataset 目录便是预处理完成的数据，可以删除 dataset_raw 文件夹了
 
@@ -350,7 +377,7 @@ python inference_main.py -m "logs/44k/G_30400.pth" -c "configs/config.json" -n "
 
 可选项部分：部分具体见下一节
 + `-lg` | `--linear_gradient`：两段音频切片的交叉淡入长度，如果强制切片后出现人声不连贯可调整该数值，如果连贯建议采用默认值 0，单位为秒
-+ `-f0p` | `--f0_predictor`：选择 F0 预测器，可选择 crepe,pm,dio,harvest,rmvpe, 默认为 pm（注意：crepe 为原 F0 使用均值滤波器）
++ `-f0p` | `--f0_predictor`：选择 F0 预测器，可选择 crepe,pm,dio,harvest,rmvpe,fcpe, 默认为 pm（注意：crepe 为原 F0 使用均值滤波器）
 + `-a` | `--auto_predict_f0`：语音转换自动预测音高，转换歌声时不要打开这个会严重跑调
 + `-cm` | `--cluster_model_path`：聚类模型或特征检索索引路径，留空则自动设为各方案模型的默认路径，如果没有训练聚类或特征检索则随便填
 + `-cr` | `--cluster_infer_ratio`：聚类方案或特征检索占比，范围 0-1，若没有训练聚类模型或特征检索则默认 0 即可
@@ -412,7 +439,6 @@ python train_index.py -c configs/config.json
   + `inference_main.py`中指定`cluster_model_path` 为模型输出文件，留空则默认为`logs/44k/feature_and_index.pkl`
   + `inference_main.py`中指定`cluster_infer_ratio`，`0`为完全不使用特征检索，`1`为只使用特征检索，通常设置`0.5`即可
 
-### [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/svc-develop-team/so-vits-svc/blob/4.1-Stable/sovits4_for_colab.ipynb) [sovits4_for_colab.ipynb](https://colab.research.google.com/github/svc-develop-team/so-vits-svc/blob/4.1-Stable/sovits4_for_colab.ipynb)
 
 ## 🗜️ 模型压缩
 

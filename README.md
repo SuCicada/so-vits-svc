@@ -1,11 +1,12 @@
 <div align="center">
+<img alt="LOGO" src="https://avatars.githubusercontent.com/u/127122328?s=400&u=5395a98a4f945a3a50cb0cc96c2747505d190dbc&v=4" width="300" height="300" />
   
 # SoftVC VITS Singing Voice Conversion
 
 [**English**](./README.md) | [**中文简体**](./README_zh_CN.md)
 
 [![Open In Colab](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/github/svc-develop-team/so-vits-svc/blob/4.1-Stable/sovits4_for_colab.ipynb)
-[![Licence](https://img.shields.io/badge/LICENSE-AGPL3.0-green.svg?style=for-the-badge)]([https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/blob/main/LICENSE](https://github.com/svc-develop-team/so-vits-svc/blob/4.1-Stable/LICENSE))
+[![Licence](https://img.shields.io/badge/LICENSE-AGPL3.0-green.svg?style=for-the-badge)](https://github.com/svc-develop-team/so-vits-svc/blob/4.1-Stable/LICENSE)
 
 </div>
 
@@ -174,6 +175,15 @@ If you are using the `rmvpe` F0 Predictor, you will need to download the pre-tra
 - download model at [rmvpe.pt](https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/rmvpe.pt)
   - Place it under the `pretrain` directory
 
+##### FCPE(Preview version)
+
+[FCPE(Fast Context-base Pitch Estimator)](https://github.com/CNChTu/MelPE) is a dedicated F0 predictor designed for real-time voice conversion and will become the preferred F0 predictor for sovits real-time voice conversion in the future.(The paper is being written)
+
+If you are using the `fcpe` F0 Predictor, you will need to download the pre-trained FCPE model.
+
+- download model at [fcpe.pt](https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/fcpe.pt)
+  - Place it under the `pretrain` directory
+
 ## 📊 Dataset Preparation
 
 Simply place the dataset in the `dataset_raw` directory with the following file structure:
@@ -303,6 +313,7 @@ dio
 pm
 harvest
 rmvpe
+fcpe
 ```
 
 If the training set is too noisy,it is recommended to use `crepe` to handle f0
@@ -314,6 +325,15 @@ If you want shallow diffusion (optional), you need to add the `--use_diff` param
 ```shell
 python preprocess_hubert_f0.py --f0_predictor dio --use_diff
 ```
+
+**Speed Up preprocess**
+
+If your dataset is pretty large,you can increase the param `--num_processes` like that:
+
+```shell
+python preprocess_hubert_f0.py --f0_predictor dio --num_processes 8
+```
+All the worker will be assigned to different GPU if you have more than one GPUs.
 
 After completing the above steps, the dataset directory will contain the preprocessed data, and the dataset_raw folder can be deleted.
 
@@ -354,7 +374,7 @@ Required parameters:
 
 Optional parameters: see the next section
 - `-lg` | `--linear_gradient`: The cross fade length of two audio slices in seconds. If there is a discontinuous voice after forced slicing, you can adjust this value. Otherwise, it is recommended to use the default value of 0.
-- `-f0p` | `--f0_predictor`: Select a F0 predictor, options are `crepe`, `pm`, `dio`, `harvest`, `rmvpe`, default value is `pm`(note: f0 mean pooling will be enable when using `crepe`)
+- `-f0p` | `--f0_predictor`: Select a F0 predictor, options are `crepe`, `pm`, `dio`, `harvest`, `rmvpe`,`fcpe`, default value is `pm`(note: f0 mean pooling will be enable when using `crepe`)
 - `-a` | `--auto_predict_f0`: automatic pitch prediction, do not enable this when converting singing voices as it can cause serious pitch issues.
 - `-cm` | `--cluster_model_path`: Cluster model or feature retrieval index path, if left blank, it will be automatically set as the default path of these models. If there is no training cluster or feature retrieval, fill in at will.
 - `-cr` | `--cluster_infer_ratio`: The proportion of clustering scheme or feature retrieval ranges from 0 to 1. If there is no training clustering model or feature retrieval, the default is 0.
