@@ -23,9 +23,9 @@ _lain_gradio_cmd = $(conda_run) python tools/lain_gradio.py \
       --config_path $(lain_dir)/config.json \
       --cluster_model_path $(lain_dir)/kmeans_10000.pt \
       --hubert_model_path $(lain_dir)/checkpoint_best_legacy_500.pt
-
+PORT = 17861
 lain_gradio_run:
-	$(_lain_gradio_cmd) --port 17861
+	$(_lain_gradio_cmd) --port $(PORT)
 lain_gradio_debug:
 	$(_lain_gradio_cmd) --debug
 
