@@ -17,6 +17,26 @@ lain_download:
 		https://github.com/openvpi/vocoders/releases/download/nsf-hifigan-v1/nsf_hifigan_20221211.zip )
 	unzip -o pretrain/nsf_hifigan/nsf_hifigan_20221211.zip -d pretrain
 
+	$(call wget_if_not_exist, \
+		pretrain/rmvpe.pt  ,\
+		https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/rmvpe.pt )
+	# models
+	$(call wget_if_not_exist, \
+		models/G_2400_infer.pth  ,\
+		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/G_2400_infer.pth )
+	$(call wget_if_not_exist, \
+		models/config.json  ,\
+		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/config.json )
+	$(call wget_if_not_exist, \
+		models/kmeans_10000.pt  ,\
+		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/kmeans_10000.pt )
+	$(call wget_if_not_exist, \
+		models/diffusion/config.yaml  ,\
+		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/diffusion/config.yaml )
+	$(call wget_if_not_exist, \
+		models/diffusion/model_12000.pt  ,\
+		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/diffusion/model_12000.pt )
+
 #$(call wget_if_not_exist, \
 #			$(lain_dir)/config.json, \
 #			https://huggingface.co/SuCicada/Lain-so-vits-svc-4.0/resolve/main/config.json)
@@ -30,12 +50,12 @@ lain_download:
 _lain_gradio_cmd = $(conda_run) python tools/lain_gradio.py \
       --model_path $(lain_dir)/G_2400_infer.pth \
       --config_path $(lain_dir)/config.json \
-      --diff_model_path $(lain_dir)/model_12000.pt \
-      --diff_config_path $(lain_dir)/config.yaml \
+      --diff_model_path $(lain_dir)/diffusion/model_12000.pt \
+      --diff_config_path $(lain_dir)/diffusion/config.yaml \
       --cluster_model_path $(lain_dir)/kmeans_10000.pt \
 
 lain_gradio_run:
-	$(_lain_gradio_cmd) --port 17861
+	$(_lain_gradio_cmd) # --port 17861
 lain_gradio_debug:
 	$(_lain_gradio_cmd) --debug
 

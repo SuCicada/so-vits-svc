@@ -14,8 +14,8 @@ config = {
     "model_path": "models/G_2400_infer.pth",
     "config_path": "models/config.json",
     "cluster_model_path": "models/kmeans_10000.pt",
-    "diff_model_path": "models/model_12000.pt",
-    "diff_config_path": "models/config.yaml",
+    "diff_model_path": "models/diffusion/model_12000.pt",
+    "diff_config_path": "models/diffusion/config.yaml",
 }
 svcInfer: SvcInfer = SvcInfer(config)
 

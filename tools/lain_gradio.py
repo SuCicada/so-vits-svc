@@ -30,8 +30,11 @@ import uvicorn
 import yaml
 from gradio import networking
 
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
+from tools.webui.webui_utils import Config, MODEL_TYPE, ENCODER_PRETRAIN
+from tools.webui.release_packing import ReleasePacker
 from tools.infer_base import SvcInfer
 import utils
 # from auto_slicer import AutoSlicer
@@ -71,49 +74,9 @@ svcInfer: SvcInfer = None
 sovits_params = {}
 diff_params = {}
 # Some dicts for mapping
-MODEL_TYPE = {
-    "vec768l12": 768,
-    "vec256l9": 256,
-    "hubertsoft": 256,
-    "whisper-ppg": 1024,
-    "cnhubertlarge": 1024,
-    "dphubert": 768,
-    "wavlmbase+": 768,
-    "whisper-ppg-large": 1280
-}
-ENCODER_PRETRAIN = {
-    "vec256l9": "pretrain/checkpoint_best_legacy_500.pt",
-    "vec768l12": "pretrain/checkpoint_best_legacy_500.pt",
-    "hubertsoft": "pretrain/hubert-soft-0d54a1f4.pt",
-    "whisper-ppg": "pretrain/medium.pt",
-    "cnhubertlarge": "pretrain/chinese-hubert-large-fairseq-ckpt.pt",
-    "dphubert": "pretrain/DPHuBERT-sp0.75.pth",
-    "wavlmbase+": "pretrain/WavLM-Base+.pt",
-    "whisper-ppg-large": "pretrain/large-v2.pt"
-}
 
 
-class Config:
-    def __init__(self, path, type):
-        self.path = path
-        self.type = type
-
-    def read(self):
-        if self.type == "json":
-            with open(self.path, 'r') as f:
-                return json.load(f)
-        if self.type == "yaml":
-            with open(self.path, 'r') as f:
-                return yaml.safe_load(f)
-
-    def save(self, content):
-        if self.type == "json":
-            with open(self.path, 'w') as f:
-                json.dump(content, f, indent=4)
-        if self.type == "yaml":
-            with open(self.path, 'w') as f:
-                yaml.safe_dump(content, f, default_flow_style=False, sort_keys=False)
-
+print("svcInfer",svcInfer)
 
 def get_default_settings():
     global sovits_params, diff_params, second_dir_enable
@@ -307,11 +270,15 @@ def load_model_func(ckpt_name, cluster_name, config_name, enhance, diff_model_na
     clu_load = "未加载" if cluster_name == "no_clu" else cluster_name
     diff_load = "未加载" if diff_model_name == "no_diff" else f"{diff_model_name} | 采样器: {method} | 加速倍数：{int(speedup)} | 最大浅扩散步数：{k_step_max}"
     output_msg = f"{sovits_msg}{index_or_kmeans}：{clu_load}\n扩散模型：{diff_load}"
+
     return (
         output_msg,
         gr.Dropdown.update(choices=spk_list, value=spk_choice),
         clip,
-        gr.Slider.update(value=100 if k_step_max > 100 else k_step_max, minimum=speedup, maximum=k_step_max)
+        gr.Slider.update(value=100 if k_step_max > 100 else k_step_max, minimum=speedup, maximum=k_step_max),
+
+        auto_load(choice_ckpt.value),
+        load_json_encoder(config_choice.value, choice_ckpt.value),
     )
 
 
@@ -968,6 +935,8 @@ def pack_autoload(model_to_pack):
 
 
 def release_packing(model_to_pack, model_config, speaker, diff_to_pack, cluster_to_pack):
+    print("release_packing")
+    print(model_to_pack, model_config, speaker, diff_to_pack, cluster_to_pack)
     model_path = diff_path = cluster_path = ""
     basename = os.path.splitext(model_to_pack)[0]
     diff_basename = os.path.splitext(diff_to_pack)[0]
@@ -1023,7 +992,8 @@ def release_install(model_zip_path):
 # read default params
 sovits_params, diff_params, second_dir_enable = get_default_settings()
 second_dir_enable = True
-second_dir = diff_second_dir = "."
+second_dir =  root_project #/ "models"
+diff_second_dir = second_dir #/ "diffusion"
 ckpt_read_dir = second_dir if second_dir_enable else workdir
 config_read_dir = second_dir if second_dir_enable else config_dir
 diff_read_dir = diff_second_dir if second_dir_enable else diff_workdir
@@ -1103,28 +1073,49 @@ default_cluster_model_path = args.cluster_model_path
 app = gr.Blocks()
 with app:
     gr.Markdown(value="""
-        ### So-VITS-SVC 4.1-Stable WebUI 推理&训练 v2.3.10
-                
-        制作协力：bilibili@麦哲云
-
-        仅供个人娱乐和非商业用途，禁止用于血腥、暴力、性相关、政治相关内容
-
-        [使用文档和常见报错解答](https://www.yuque.com/umoubuton/ueupp5)
-
-        整合包作者：bilibili@羽毛布団 | 技术交流群：742817595 | 交流二群：168254971 | 交流三群：416656175
-
+        <h1 style='text-align: center;'> Serial Experiments Lain </h1>
+        <h2 style='text-align: center;'> So-VITS-SVC 4.1-Stable WebUI 推理&训练 v2023.8.4 </h2>
+        """)
+    # todo
+    gr.Markdown(value="""
+        ## 使用前先点击“加载模型”
+    
+        本页面仓库：[SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/tree/4.1-Stable)
+        
+        Lain 中文交流频道：（待补充）
+        
+        注意：本页面是为了推理Lain而准备的。其他完整功能请使用整合包，
+        
+        代码参考：bilibili@麦哲云
+        
+        [整合包，使用文档和常见报错解答](https://www.yuque.com/umoubuton/ueupp5)
         """)
     with gr.Tabs():
         with gr.TabItem("load model") as inference_tab:
             mode_caption = gr.Markdown(value=f"""
-                {current_mode}，可在页面底端切换模式
+                {current_mode}，
             """)
             with gr.Row():
                 loadckpt = gr.Button("加载模型", variant="primary")
-                unload = gr.Button("卸载模型", variant="primary")
+                unload = gr.Button("卸载模型", variant="secondary")
             with gr.Row():
                 model_message = gr.Textbox(label="Output Message")
                 sid = gr.Dropdown(label="So-VITS说话人", value="speaker0")
+
+            with gr.Row():
+                enhance = gr.Checkbox(
+                    label="是否使用NSF_HIFIGAN增强，该选项对部分训练集少的模型有一定的音质增强效果，但是对训练好的模型有反面效果，默认关闭",
+                    value=False)
+                only_diffusion = gr.Checkbox(
+                    label="是否使用全扩散推理，开启后将不使用So-VITS模型，仅使用扩散模型进行完整扩散推理，不建议使用",
+                    value=False)
+            with gr.Row():
+                diffusion_method = gr.Dropdown(label="扩散模型采样器",
+                                               choices=["dpm-solver++", "dpm-solver", "pndm", "ddim", "unipc"],
+                                               value="dpm-solver++")
+                diffusion_speedup = gr.Number(label="扩散加速倍数，默认为10倍", value=10)
+
+            gr.Markdown(value="""**下面参数已经默认设置好了**""")
 
             with gr.Row():
                 choice_ckpt = gr.Dropdown(label="模型选择", choices=ckpt_list, value=default_model_path)
@@ -1141,18 +1132,6 @@ with app:
             cluster_choice = gr.Dropdown(label="（可选）选择聚类模型/特征检索模型", choices=cluster_list,
                                          value=default_cluster_model_path)
             refresh = gr.Button("刷新选项")
-            with gr.Row():
-                enhance = gr.Checkbox(
-                    label="是否使用NSF_HIFIGAN增强，该选项对部分训练集少的模型有一定的音质增强效果，但是对训练好的模型有反面效果，默认关闭",
-                    value=False)
-                only_diffusion = gr.Checkbox(
-                    label="是否使用全扩散推理，开启后将不使用So-VITS模型，仅使用扩散模型进行完整扩散推理，不建议使用",
-                    value=False)
-            with gr.Row():
-                diffusion_method = gr.Dropdown(label="扩散模型采样器",
-                                               choices=["dpm-solver++", "dpm-solver", "pndm", "ddim", "unipc"],
-                                               value="dpm-solver++")
-                diffusion_speedup = gr.Number(label="扩散加速倍数，默认为10倍", value=10)
             using_device = gr.Dropdown(label="推理设备，默认为自动选择", choices=["Auto", *cuda.keys(), "cpu"],
                                        value="Auto")
 
@@ -1180,7 +1159,7 @@ with app:
                         # tts_gender = gr.Radio(label="说话人性别", choices=["男", "女"], value="男")
                         # tts_lang = gr.Dropdown(label="选择语言，Auto为根据输入文字自动识别", choices=SUPPORTED_LANGUAGES,
                         #                        value="Auto")
-                        tts_engine = gr.components.Dropdown(["edge-tts", "gtts", ], value="gtts",
+                        tts_engine = gr.components.Dropdown(["edge-tts", "gtts", ], value="edge-tts",
                                                             label="tts engine")
                         language = gr.components.Dropdown(["ja", "en", "zh", ], value="ja",
                                                           label="language")
@@ -1204,13 +1183,14 @@ with app:
 
                 with gr.TabItem("批量音频上传"):
                     vc_batch_files = gr.Files(label="批量音频上传", file_types=["audio"], file_count="multiple")
+                    vc_batch_submit = gr.Button("批量转换", variant="primary")
 
             with gr.Row():
                 auto_f0 = gr.Checkbox(
                     label="自动f0预测，配合聚类模型f0预测效果更好,会导致变调功能失效（仅限转换语音，歌声不要勾选此项会跑调）",
                     value=True)
                 f0_predictor = gr.Radio(label="f0预测器选择（如遇哑音可以更换f0预测器解决，crepe为原F0使用均值滤波器）",
-                                        choices=f0_options, value="crepe")
+                                        choices=f0_options, value="rmvpe")
                 cr_threshold = gr.Number(
                     label="F0过滤阈值，只有使用crepe时有效. 数值范围从0-1. 降低该值可减少跑调概率，但会增加哑音",
                     value=0.05)
@@ -1228,10 +1208,12 @@ with app:
                 slice_db = gr.Number(label="切片阈值", value=-50)
                 cl_num = gr.Number(label="音频自动切片，0为按默认方式切片，单位为秒/s，爆显存可以设置此处强制切片",
                                    value=0)
+
             with gr.Accordion("高级设置（一般不需要动）", open=False):
                 noise_scale = gr.Number(label="noise_scale 建议不要动，会影响音质，玄学参数", value=0.4)
                 pad_seconds = gr.Number(
-                    label="推理音频pad秒数，由于未知原因开头结尾会有异响，pad一小段静音段后就不会出现", value=0.5)
+                    label="推理音频pad秒数，由于未知原因开头结尾会有异响，pad一小段静音段后就不会出现",
+                    value=0.01)
                 lg_num = gr.Number(
                     label="两端音频切片的交叉淡入长度，如果自动切片后出现人声不连贯可调整该数值，如果连贯建议采用默认值0，注意，该设置会影响推理速度，单位为秒/s",
                     value=1)
@@ -1244,14 +1226,14 @@ with app:
                     label="输入源响度包络替换输出响度包络融合比例，越靠近1越使用输出响度包络", value=0)
                 use_spk_mix = gr.Checkbox(label="动态声线融合，需要手动编辑角色混合轨道，没做完暂时不要开启", value=False,
                                           interactive=False)
-            with gr.Row():
-                vc_batch_submit = gr.Button("批量转换", variant="primary")
+            # with gr.Row():
             # interrupt_button = gr.Button("中止转换", variant="danger")
 
         loadckpt.click(load_model_func,
                        [choice_ckpt, cluster_choice, config_choice, enhance, diff_choice, diff_config_choice,
                         only_diffusion, use_spk_mix, using_device, diffusion_method, diffusion_speedup, cl_num],
-                       [model_message, sid, cl_num, k_step])
+                       [model_message, sid, cl_num, k_step,
+                        model_branch, config_info])
         unload.click(model_empty_cache, [], [sid, model_message])
         use_microphone.change(source_change, [use_microphone], [vc_input3])
         vc_tts_submit.click(tts_fn,
@@ -1437,5 +1419,5 @@ def main():
 
 
 if __name__ == '__main__':
-    app()
+    # app()
     main()
