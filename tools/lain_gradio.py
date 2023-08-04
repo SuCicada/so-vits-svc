@@ -1060,6 +1060,7 @@ parser.add_argument('--diff_model_path', type=str, help='diff_model_path')
 parser.add_argument('--diff_config_path', type=str, help='diff_config_path')
 parser.add_argument('--cluster_model_path', type=str, help='cluster_model_path')
 parser.add_argument("--port", type=int, help='port')
+parser.add_argument("--share", action='store_true', help='share')
 parser.add_argument('--debug', action='store_true', help='debug')
 # parser.add_argument('--inbrowser', action='store_true', help='inbrowser')
 args = parser.parse_args()
@@ -1415,7 +1416,8 @@ def main():
     else:
         app.queue(concurrency_count=1022, max_size=2044) \
             .launch(server_name="127.0.0.1",
-                    server_port=args.port, inbrowser=False)
+                    server_port=args.port, inbrowser=False,
+                    share=args.share)
 
 
 if __name__ == '__main__':

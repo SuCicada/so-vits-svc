@@ -19,3 +19,4 @@ ffmpeg-python
 torchcrepe
 soundFile==0.12.1
 sounddevice
+faiss-cpu
