@@ -1083,6 +1083,8 @@ with app:
     
         本页面仓库：[SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/tree/4.1-Stable)
         
+        模型地址：[SuCicada/Lain-so-vits-svc-4.1](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1)
+        
         Lain 中文交流频道：（待补充）
         
         注意：本页面是为了推理Lain而准备的。其他完整功能请使用整合包，
