@@ -1415,8 +1415,8 @@ def main():
         uvicorn.run(f"{filename}:app.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
     else:
         app.queue(concurrency_count=1022, max_size=2044) \
-            .launch(server_name="127.0.0.1",
-                    server_port=args.port, inbrowser=False,
+            .launch(
+                    server_port=args.port,
                     share=args.share)
 
 
