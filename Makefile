@@ -4,6 +4,8 @@ CONDA_ENV=so-vits-svc
 lain_dir=models
 test:
 	@echo $(lain_dir)
+install:
+	pip install -r requirements_infer.txt
 lain_download:
 	#$(call wget_if_not_exist, \
 #			$(lain_dir)/checkpoint_best_legacy_500.pt, \
