@@ -1060,6 +1060,7 @@ parser.add_argument('--diff_model_path', type=str, help='diff_model_path')
 parser.add_argument('--diff_config_path', type=str, help='diff_config_path')
 parser.add_argument('--cluster_model_path', type=str, help='cluster_model_path')
 parser.add_argument("--port", type=int, help='port')
+parser.add_argument("--root_path", type=str, help='root_path', default="")
 parser.add_argument("--share", action='store_true', help='share')
 parser.add_argument('--debug', action='store_true', help='debug')
 # parser.add_argument('--inbrowser', action='store_true', help='inbrowser')
@@ -1417,7 +1418,7 @@ def main():
         uvicorn.run(f"{filename}:app.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
     else:
         app.queue(concurrency_count=1022, max_size=2044) \
-            .launch(
+            .launch(root_path=args.root_path,
                     server_port=args.port,
                     share=args.share)
 
