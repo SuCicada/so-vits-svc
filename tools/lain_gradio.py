@@ -1104,7 +1104,7 @@ with app:
                 unload = gr.Button("卸载模型", variant="secondary")
             with gr.Row():
                 model_message = gr.Textbox(label="Output Message")
-                sid = gr.Dropdown(label="So-VITS说话人", value="speaker0")
+                sid = gr.Dropdown(label="So-VITS说话人", value="lain")
 
             with gr.Row():
                 enhance = gr.Checkbox(
