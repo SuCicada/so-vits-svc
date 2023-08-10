@@ -1076,18 +1076,18 @@ app = gr.Blocks()
 with app:
     gr.Markdown(value="""
         <h1 style='text-align: center;'> Serial Experiments Lain </h1>
-        <h2 style='text-align: center;'> So-VITS-SVC 4.1-Stable WebUI 推理&训练 v2023.8.4 </h2>
+        <h2 style='text-align: center;'> So-VITS-SVC 4.1-Stable WebUI 推理&训练 v2023.8.10 </h2>
         """)
     # todo
     gr.Markdown(value="""
-        ## 使用前先点击“加载模型”
+        ## 第一次使用前先点击“加载模型”
     
-        本页面仓库：[SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/tree/4.1-Stable)
+        ### 本页面仓库：[SuCicada/so-vits-svc](https://github.com/SuCicada/so-vits-svc/tree/4.1-Stable)
         
-        模型地址：[SuCicada/Lain-so-vits-svc-4.1](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1)
+        ### 模型地址：[SuCicada/Lain-so-vits-svc-4.1](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1)
         
-        Lain 中文交流频道：（待补充）
-        
+        ### 我们的 Lain 中文交流频道：https://discord.gg/AS43RhmE
+        <br>
         注意：本页面是为了推理Lain而准备的。其他完整功能请使用整合包，
         
         代码参考：bilibili@麦哲云
