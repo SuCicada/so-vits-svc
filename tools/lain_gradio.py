@@ -30,7 +30,6 @@ import uvicorn
 import yaml
 from gradio import networking
 
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 from tools.webui.webui_utils import Config, MODEL_TYPE, ENCODER_PRETRAIN
@@ -76,7 +75,8 @@ diff_params = {}
 # Some dicts for mapping
 
 
-print("svcInfer",svcInfer)
+print("svcInfer", svcInfer)
+
 
 def get_default_settings():
     global sovits_params, diff_params, second_dir_enable
@@ -228,6 +228,7 @@ def load_model_func(ckpt_name, cluster_name, config_name, enhance, diff_model_na
         _content["infer"]["method"] = str(method)
         k_step_max = _content["model"].get('k_step_max', 0) if _content["model"].get('k_step_max', 0) != 0 else 1000
         _diff.save(_content)
+    encoder = None
     if not only_diffusion:
         net = torch.load(ckpt_path, map_location=torch.device('cpu'))
         # 读取模型各维度并比对，还有小可爱无视提示硬要加载底模的就返回个未初始张量
@@ -242,22 +243,31 @@ def load_model_func(ckpt_name, cluster_name, config_name, enhance, diff_model_na
     else:
         spk_dict = diff_spk
         spk_choice = diff_spk_choice
+
     fr = cluster_name.endswith(".pkl")  # 如果是pkl后缀就启用特征检索
     shallow_diffusion = diff_model_name != "no_diff"  # 加载了扩散模型就启用浅扩散
     device = cuda[using_device] if "CUDA" in using_device else using_device
-    model = Svc(ckpt_path,
-                config_path,
-                device=device if device != "Auto" else None,
-                cluster_model_path=cluster_path,
-                nsf_hifigan_enhance=enhance,
-                diffusion_model_path=diff_model_path,
-                diffusion_config_path=diff_config_path,
-                shallow_diffusion=shallow_diffusion,
-                only_diffusion=only_diffusion,
-                spk_mix_enable=use_spk_mix,
-                feature_retrieval=fr)
-    global svcInfer
-    svcInfer = SvcInfer.newFromSvc(model)
+    if model.nsf_hifigan_enhance == enhance and \
+            model.shallow_diffusion == shallow_diffusion and \
+            model.only_diffusion == only_diffusion and \
+            model.spk_mix_enable == use_spk_mix and \
+            model.feature_retrieval == fr:
+        print("模型已加载，无需重复加载")
+    else:
+        model_empty_cache()
+        model = Svc(ckpt_path,
+                    config_path,
+                    device=device if device != "Auto" else None,
+                    cluster_model_path=cluster_path,
+                    nsf_hifigan_enhance=enhance,
+                    diffusion_model_path=diff_model_path,
+                    diffusion_config_path=diff_config_path,
+                    shallow_diffusion=shallow_diffusion,
+                    only_diffusion=only_diffusion,
+                    spk_mix_enable=use_spk_mix,
+                    feature_retrieval=fr)
+        global svcInfer
+        svcInfer = SvcInfer.newFromSvc(model)
     spk_list = list(spk_dict.keys())
     if not only_diffusion:
         clip = 25 if encoder == "whisper-ppg" or encoder == "whisper-ppg-large" else cl_num  # Whisper必须强制切片25秒
@@ -992,8 +1002,8 @@ def release_install(model_zip_path):
 # read default params
 sovits_params, diff_params, second_dir_enable = get_default_settings()
 second_dir_enable = True
-second_dir =  root_project #/ "models"
-diff_second_dir = second_dir #/ "diffusion"
+second_dir = root_project  # / "models"
+diff_second_dir = second_dir  # / "diffusion"
 ckpt_read_dir = second_dir if second_dir_enable else workdir
 config_read_dir = second_dir if second_dir_enable else config_dir
 diff_read_dir = diff_second_dir if second_dir_enable else diff_workdir
