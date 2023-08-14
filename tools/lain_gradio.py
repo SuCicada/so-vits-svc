@@ -247,7 +247,8 @@ def load_model_func(ckpt_name, cluster_name, config_name, enhance, diff_model_na
     fr = cluster_name.endswith(".pkl")  # 如果是pkl后缀就启用特征检索
     shallow_diffusion = diff_model_name != "no_diff"  # 加载了扩散模型就启用浅扩散
     device = cuda[using_device] if "CUDA" in using_device else using_device
-    if model.nsf_hifigan_enhance == enhance and \
+    if model is not None and \
+            model.nsf_hifigan_enhance == enhance and \
             model.shallow_diffusion == shallow_diffusion and \
             model.only_diffusion == only_diffusion and \
             model.spk_mix_enable == use_spk_mix and \
