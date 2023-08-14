@@ -1429,6 +1429,7 @@ def main():
     else:
         app.queue(concurrency_count=1022, max_size=2044) \
             .launch(root_path=args.root_path,
+                    server_name="0.0.0.0",
                     server_port=args.port,
                     share=args.share)
 
