@@ -45,6 +45,6 @@ def slicer_fn(input_dir, output_dir, process_method, max_sec, min_sec):
 
 import os
 
-slicer_fn("/Users/peng/PROGRAM/GitHub/lain_data/output/good",
-          "/Users/peng/PROGRAM/GitHub/so-vits-svc/dataset_raw/lain",
+slicer_fn("/Users/peng/Music/train/good",
+          "/Users/peng/PROGRAM/GitHub/so-vits-svc/dataset_raw/agami",
           "丢弃", 15, 2)
