@@ -165,7 +165,7 @@ pretrain/
 .vscode/launch.json
 
 trained/**/
-models/
+/models/
 pre_trained_model/
 *.wav
 
@@ -173,4 +173,6 @@ pre_trained_model/
 *.iml
 *.flac
 *.pth
-release_packs
+/release_packs
+/models_archive
+tools/trash

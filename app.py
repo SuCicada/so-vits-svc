@@ -1046,15 +1046,16 @@ def slicer_fn(input_dir, output_dir, process_method, max_sec, min_sec):
     return f"成功将音频切分为{file_count}条片段，其中最长{max_duration}秒，最短{min_duration}秒，切片后的音频总时长{hrs:02d}小时{mins:02d}分{sec}秒，{rate_msg}"
 
 
-def model_compression(_model):
+def model_compression(_model,fp16_compress):
     if _model == "":
         return "请先选择要压缩的模型"
     else:
+        model_config = "configs/config.json"
         model_path = os.path.join(ckpt_read_dir, _model)
         filename, extension = os.path.splitext(_model)
         output_model_name = f"{filename}_compressed{extension}"
         output_path = os.path.join(ckpt_read_dir, output_model_name)
-        removeOptimizer(model_path, output_path)
+        removeOptimizer(model_config, model_path, fp16_compress,output_path,)
         return f"模型已成功被保存在了{output_path}"
 
 
@@ -1549,7 +1550,7 @@ with app:
                     compress_model_btn = gr.Button("压缩模型", variant="primary")
                     compress_model_output = gr.Textbox(label="输出信息", value="")
 
-                    compress_model_btn.click(model_compression, [model_to_compress], [compress_model_output])
+                    compress_model_btn.click(model_compression, [model_to_compress,fp16_compress], [compress_model_output])
 
                 with gr.TabItem("模型发布打包/安装"):
                     gr.Markdown(value="""

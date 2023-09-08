@@ -1,5 +1,12 @@
 import os
 import tempfile
+from pathlib import Path
+
+
+def get_root_project():
+    root_project = Path(__file__).parent.parent.resolve()
+    # root_project = Path(os.path.abspath(root_project))
+    return root_project
 
 class MyNamedTemporaryFile:
     def __init__(self):
@@ -22,7 +29,7 @@ class MyNamedTemporaryFile:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.file_path and os.path.exists(self.file_path):
-            
+
             os.remove(self.file_path)
 
 # 使用示例

@@ -22,22 +22,24 @@ lain_download:
 	$(call wget_if_not_exist, \
 		pretrain/rmvpe.pt  ,\
 		https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/rmvpe.pt )
+
 	# models
-	$(call wget_if_not_exist, \
-		models/G_2400_infer.pth  ,\
-		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/G_2400_infer.pth )
-	$(call wget_if_not_exist, \
-		models/config.json  ,\
-		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/config.json )
-	$(call wget_if_not_exist, \
-		models/kmeans_10000.pt  ,\
-		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/kmeans_10000.pt )
-	$(call wget_if_not_exist, \
-		models/diffusion/config.yaml  ,\
-		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/diffusion/config.yaml )
-	$(call wget_if_not_exist, \
-		models/diffusion/model_12000.pt  ,\
-		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/diffusion/model_12000.pt )
+	python tools/infer/download_models.py
+#	$(call wget_if_not_exist, \
+#		models/G_2400_infer.pth  ,\
+#		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/G_2400_infer.pth )
+#	$(call wget_if_not_exist, \
+#		models/config.json  ,\
+#		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/config.json )
+#	$(call wget_if_not_exist, \
+#		models/kmeans_10000.pt  ,\
+#		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/kmeans_10000.pt )
+#	$(call wget_if_not_exist, \
+#		models/diffusion/config.yaml  ,\
+#		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/diffusion/config.yaml )
+#	$(call wget_if_not_exist, \
+#		models/diffusion/model_12000.pt  ,\
+#		https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1/resolve/main/diffusion/model_12000.pt )
 
 #$(call wget_if_not_exist, \
 #			$(lain_dir)/config.json, \
@@ -63,3 +65,6 @@ lain_gradio_debug:
 
 lain_server:
 	$(conda_run) python tools/server.py
+
+requirements-lock:
+	$(conda_run) pip freeze > requirements-infer-lock.txt
