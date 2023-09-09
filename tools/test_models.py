@@ -7,16 +7,13 @@ import soundfile
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
+from tools.file_util import get_root_project
+from tools.infer import models_info
 from tools import infer_base
 from tools.infer_base import SvcInfer
 
-config = {
-    "model_path": "models/G_2400_infer.pth",
-    "config_path": "models/config.json",
-    "cluster_model_path": "models/kmeans_10000.pt",
-    "diff_model_path": "models/diffusion/model_12000.pt",
-    "diff_config_path": "models/diffusion/config.yaml",
-}
+model_info = models_info.LainV2
+config = model_info.to_svc_config(f"{get_root_project()}/models")
 svcInfer: SvcInfer = SvcInfer(config)
 
 
@@ -41,12 +38,15 @@ def tts():
 
 
 def svc():
-    svc = svcInfer.svc
-
-    audio = "1_Bôa - Duvet TV Sized_(Vocals).wav"
-    target_sampling_rate, target_audio = infer_base.transform_audio(audio, svc,
-                                                                    enhancer_adaptive_key=8)
+    # svc = svcInfer.
+    audio = "tools/trash/1_Bôa - Duvet TV Sized_(Vocals).wav"
+    target_sampling_rate, target_audio = svcInfer.transform_audio_file(audio,
+                                                                       # enhancer_adaptive_key=8
+                                                                       )
     soundfile.write("out.wav", target_audio, target_sampling_rate, format="wav")
+    sounddevice.play(target_audio, target_sampling_rate, blocking=True)
 
 
 # tts()
+
+svc()

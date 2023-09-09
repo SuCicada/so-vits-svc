@@ -56,6 +56,7 @@ def mp3_to_wav(mp3_bytes) -> (int, bytes):
 
 
 def text_to_wav(text, tts_engine="gtts", language="ja", rate=1) -> (int, bytes):
+    text = text.strip()
     stream: BytesIO
     print("use tts_engine", tts_engine)
     print("text:", text)

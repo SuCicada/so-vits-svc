@@ -52,12 +52,13 @@ lain_download:
 #			https://huggingface.co/SuCicada/Lain-so-vits-svc-4.0/resolve/main/kmeans_10000.pt)
 
 _lain_gradio_cmd = $(conda_run) python tools/lain_gradio.py \
-      --model_path $(lain_dir)/G_2400_infer.pth \
-      --config_path $(lain_dir)/config.json \
-      --diff_model_path $(lain_dir)/diffusion/model_12000.pt \
-      --diff_config_path $(lain_dir)/diffusion/config.yaml \
-      --cluster_model_path $(lain_dir)/kmeans_10000.pt \
-
+       --model LainV2
+#      --model_path $(lain_dir)/G_2400_infer.pth \
+#      --config_path $(lain_dir)/config.json \
+#      --diff_model_path $(lain_dir)/diffusion/model_12000.pt \
+#      --diff_config_path $(lain_dir)/diffusion/config.yaml \
+#      --cluster_model_path $(lain_dir)/kmeans_10000.pt \
+#
 lain_gradio_run:
 	$(_lain_gradio_cmd) $(args) # --port 17861
 lain_gradio_debug:

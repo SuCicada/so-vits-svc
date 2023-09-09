@@ -361,7 +361,7 @@ class Svc(object):
                         slice_db,
                         cluster_infer_ratio,
                         auto_predict_f0,
-                        noice_scale,
+                        noise_scale,
                         pad_seconds=0.5,
                         clip_seconds=0,
                         lg_num=0,
@@ -469,18 +469,18 @@ class Svc(object):
                 soundfile.write(raw_path, dat, audio_sr, format="wav")
                 raw_path.seek(0)
                 out_audio, out_sr, out_frame = self.infer(spk, tran, raw_path,
-                                                    cluster_infer_ratio=cluster_infer_ratio,
-                                                    auto_predict_f0=auto_predict_f0,
-                                                    noice_scale=noice_scale,
-                                                    f0_predictor = f0_predictor,
-                                                    enhancer_adaptive_key = enhancer_adaptive_key,
-                                                    cr_threshold = cr_threshold,
-                                                    k_step = k_step,
-                                                    frame = global_frame,
-                                                    spk_mix = use_spk_mix,
-                                                    second_encoding = second_encoding,
-                                                    loudness_envelope_adjustment = loudness_envelope_adjustment
-                                                    )
+                                                          cluster_infer_ratio=cluster_infer_ratio,
+                                                          auto_predict_f0=auto_predict_f0,
+                                                          noice_scale=noise_scale,
+                                                          f0_predictor = f0_predictor,
+                                                          enhancer_adaptive_key = enhancer_adaptive_key,
+                                                          cr_threshold = cr_threshold,
+                                                          k_step = k_step,
+                                                          frame = global_frame,
+                                                          spk_mix = use_spk_mix,
+                                                          second_encoding = second_encoding,
+                                                          loudness_envelope_adjustment = loudness_envelope_adjustment
+                                                          )
                 global_frame += out_frame
                 _audio = out_audio.cpu().numpy()
                 pad_len = int(self.target_sample * pad_seconds)

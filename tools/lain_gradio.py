@@ -32,6 +32,7 @@ from gradio import networking
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
+from tools.infer.models_info import getModelsInfo
 from tools.webui.webui_utils import Config, MODEL_TYPE, ENCODER_PRETRAIN
 from tools.webui.release_packing import ReleasePacker
 from tools.infer_base import SvcInfer
@@ -456,11 +457,25 @@ def tts_fn(_text, tts_engine, _lang, _rate, output_format, sid, vc_transform, au
            noise_scale, pad_seconds, cl_num, lg_num, lgr_num, f0_predictor, enhancer_adaptive_key, cr_threshold, k_step,
            use_spk_mix, second_encoding, loudness_envelope_adjustment):
     try:
-        res = svcInfer.tts_fn(_text, tts_engine, _lang, _rate,
-                              sid, vc_transform, auto_f0, cluster_ratio,
-                              slice_db, noise_scale, pad_seconds, cl_num, lg_num, lgr_num,
-                              f0_predictor, enhancer_adaptive_key, cr_threshold, k_step,
-                              use_spk_mix, second_encoding, loudness_envelope_adjustment)
+        res = svcInfer.get_audio(_text, tts_engine, _lang, _rate,
+                                 spk=sid,
+                                 tran=vc_transform,
+                                 slice_db=slice_db,
+                                 cluster_ratio=cluster_ratio,
+                                 auto_predict_f0=auto_f0,
+                                 # auto_f0, cluster_ratio,
+                                 noise_scale=noise_scale,
+                                 pad_seconds=pad_seconds,
+                                 clip_seconds=cl_num,
+                                 lg_num=lg_num,
+                                 lgr_num=lgr_num,
+                                 # cl_num, lg_num, lgr_num,
+                                 f0_predictor=f0_predictor,
+                                 enhancer_adaptive_key=enhancer_adaptive_key,
+                                 cr_threshold=cr_threshold, k_step=k_step,
+                                 use_spk_mix=use_spk_mix,
+                                 second_encoding=second_encoding,
+                                 loudness_envelope_adjustment=loudness_envelope_adjustment)
         # os.remove("tts.wav")
         return res
         sample, _audio = res[1]
@@ -1065,6 +1080,7 @@ f0_options = ["crepe", "pm", "dio", "harvest", "rmvpe"] if os.path.exists("pretr
 
 print(sys.argv)
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', type=str, help='model info name')
 parser.add_argument('--model_path', type=str, help='model_path')
 parser.add_argument('--config_path', type=str, help='config_path')
 parser.add_argument('--diff_model_path', type=str, help='diff_model_path')
@@ -1077,11 +1093,20 @@ parser.add_argument('--debug', action='store_true', help='debug')
 # parser.add_argument('--inbrowser', action='store_true', help='inbrowser')
 args = parser.parse_args()
 
-default_model_path = args.model_path
-default_config_path = args.config_path
-default_diff_model_path = args.diff_model_path
-default_diff_config_path = args.diff_config_path
-default_cluster_model_path = args.cluster_model_path
+if args.model is not None:
+    modelInfo = getModelsInfo(args.model)
+    config = modelInfo.to_svc_config(str(root_project / "models"))
+    default_model_path = config["model_path"]
+    default_config_path = config["config_path"]
+    default_diff_model_path = config["diff_model_path"]
+    default_diff_config_path = config["diff_config_path"]
+    default_cluster_model_path = config["cluster_model_path"]
+else:
+    default_model_path = args.model_path
+    default_config_path = args.config_path
+    default_diff_model_path = args.diff_model_path
+    default_diff_config_path = args.diff_config_path
+    default_cluster_model_path = args.cluster_model_path
 
 app = gr.Blocks()
 with app:

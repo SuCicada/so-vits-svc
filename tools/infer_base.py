@@ -9,21 +9,21 @@ import soundfile
 import soundfile as sf
 
 from inference.infer_tool import Svc
-from . import tts_utils
+import tts_utils, file_util
 
 enhance = False  # 是否使用NSF_HIFIGAN增强，该选项对部分训练集少的模型有一定的音质增强效果，但是对训练好的模型有反面效果，默认关闭
 shallow_diffusion = True  # 加载了扩散模型就启用浅扩散
 only_diffusion = False  # "是否使用全扩散推理，开启后将不使用So-VITS模型，仅使用扩散模型进行完整扩散推理，不建议使用"
 use_spk_mix = False  # 动态声线融合，需要手动编辑角色混合轨道，
 
-auto_predict_f0 = True  # "自动f0预测，配合聚类模型f0预测效果更好,会导致变调功能失效（仅限转换语音，歌声勾选此项会究极跑调）"
+auto_f0 = auto_predict_f0 = True  # "自动f0预测，配合聚类模型f0预测效果更好,会导致变调功能失效（仅限转换语音，歌声勾选此项会究极跑调）"
 vc_transform = tran = 0  # 变调（整数，可以正负，半音数量，升高八度就是12
 
 pad_seconds = 0.5  # 推理音频pad秒数，由于未知原因开头结尾会有异响，pad一小段静音段后就不会出现
 cl_num = clip_seconds = 0  # 音频自动切片，0为不切片，单位为秒(s)
 lg_num = 0  # "两端音频切片的交叉淡入长度，如果自动切片后出现人声不连贯可调整该数值，如果连贯建议采用默认值0，注意，该设置会影响推理速度，单位为秒/s
 lgr_num = 0.75  # 自动音频切片后，需要舍弃每段切片的头尾。该参数设置交叉长度保留的比例，范围0-1,左开右闭
-cluster_infer_ratio = 0.8  # 聚类模型混合比例，0-1之间，0即不启用聚类。使用聚类模型能提升音色相似度，但会导致咬字下降（如果使用建议0.5左右）
+cluster_ratio = cluster_infer_ratio = 0.8  # 聚类模型混合比例，0-1之间，0即不启用聚类。使用聚类模型能提升音色相似度，但会导致咬字下降（如果使用建议0.5左右）
 # F0_mean_pooling = False  # 是否对F0使用均值滤波器(池化)，对部分哑音有改善。注意，启动该选项会导致推理速度下降，默认关闭
 f0_predictor = "crepe"  # 选择F0预测器,可选择crepe,pm,dio,harvest,rmvpe,默认为pm(注意：crepe为原F0使用均值滤波器)
 cr_threshold = 0.05  # "F0过滤阈值，只有启动f0_mean_pooling时有效. 数值范围从0-1. 降低该值可减少跑调概率，但会增加哑音"
@@ -35,7 +35,7 @@ loudness_envelope_adjustment = 0  # 输入源响度包络替换输出响度包�
 # not suggest to modify
 sid = "lain"
 slice_db = -40  # 切片阈值
-noice_scale = 0.4  # noise_scale 建议不要动，会影响音质，玄学参数
+noise_scale = 0.4  # noise_scale 建议不要动，会影响音质，玄学参数
 
 enhancer_adaptive_key = 0  # "使增强器适应更高的音域(单位为半音数)|默认为0"
 
@@ -67,23 +67,37 @@ class SvcInfer:
                          spk_mix_enable=use_spk_mix,
                          feature_retrieval=fr)
 
+    def transform_audio_file(self, audio_path, **options) -> (int, np.array):
+        audio, sampling_rate = librosa.load(audio_path)
+        target_sampling_rate, target_audio = self.vc_infer(sid, audio, sampling_rate, **options)
+        return target_sampling_rate, target_audio
+
+    def transform_audio(self, origin_sampling_rate, origin_audio: np.array, **options) -> (int, np.array):
+        # print(audio.shape,sampling_rate)
+        target_sampling_rate, target_audio = self.vc_infer(sid, origin_audio, origin_sampling_rate,
+                                                           # vc_transform, auto_f0,
+                                                           # cluster_ratio,
+                                                           # slice_db, noise_scale, pad_seconds, cl_num, lg_num,
+                                                           # lgr_num, f0_predictor,
+                                                           # enhancer_adaptive_key, cr_threshold, k_step, use_spk_mix,
+                                                           # second_encoding,
+                                                           # loudness_envelope_adjustment,
+                                                           **options)
+        return target_sampling_rate, target_audio
+
     def get_audio(self, text,
                   tts_engine="edge-tts",
                   language="ja",
                   speed=1.0,
                   **options) -> ((int, np.array), (int, np.array)):
-        return self.tts_fn(text, tts_engine, language, speed,
-                           "lain",
-                           vc_transform, auto_predict_f0, cluster_infer_ratio,
-                           slice_db, noice_scale, pad_seconds, cl_num, lg_num, lgr_num, f0_predictor,
-                           enhancer_adaptive_key, cr_threshold,
-                           k_step, use_spk_mix, second_encoding, loudness_envelope_adjustment, **options)
+        #     return self.tts_fn(text, tts_engine, language, speed,
+        #                        "lain",
+        #                        vc_transform, auto_predict_f0, cluster_infer_ratio,
+        #                        slice_db, noise_scale, pad_seconds, cl_num, lg_num, lgr_num, f0_predictor,
+        #                        enhancer_adaptive_key, cr_threshold,
+        #                        k_step, use_spk_mix, second_encoding, loudness_envelope_adjustment, **options)
+        #
 
-    def tts_fn(self, _text, tts_engine, _lang, _rate,
-               sid, vc_transform, auto_f0, cluster_ratio,
-               slice_db, noise_scale, pad_seconds, cl_num, lg_num, lgr_num,
-               f0_predictor, enhancer_adaptive_key, cr_threshold, k_step,
-               use_spk_mix, second_encoding, loudness_envelope_adjustment):
         # global model
         model = self.model
         # print("TTS")
@@ -97,20 +111,22 @@ class SvcInfer:
             # _volume = f"+{int(_volume * 100)}%" if _volume >= 0 else f"{int(_volume * 100)}%"
             # cmd = [r"python", "tools/infer/tts.py", _text, _lang, _rate, _volume]
             target_sr = 44100
-            origin_sampling_rate, origin_audio = tts_utils.text_to_audio(_text, tts_engine, _lang, _rate)
+            origin_sampling_rate, origin_audio = tts_utils.text_to_audio(text, tts_engine, language, speed)
             # y, sr = librosa.load("tts.wav")
             # resampled_y = librosa.resample(origin_audio, orig_sr=origin_sampling_rate, target_sr=target_sr)
             # soundfile.write("tts.wav", resampled_y, target_sr, subtype="PCM_16")
             # input_audio = "tts.wav"
             # audio, sr = soundfile.read(input_audio)
-            target_sampling_rate, target_audio = self.vc_infer("wav", sid, origin_audio, origin_sampling_rate,
-                                                               vc_transform, auto_f0,
-                                                               cluster_ratio,
-                                                               slice_db, noise_scale, pad_seconds, cl_num, lg_num,
-                                                               lgr_num, f0_predictor,
-                                                               enhancer_adaptive_key, cr_threshold, k_step, use_spk_mix,
-                                                               second_encoding,
-                                                               loudness_envelope_adjustment)
+            target_sampling_rate, target_audio = self.vc_infer(sid, origin_audio, origin_sampling_rate,
+                                                               **options
+                                                               # vc_transform, auto_f0,
+                                                               # cluster_ratio,
+                                                               # slice_db, noise_scale, pad_seconds, cl_num, lg_num,
+                                                               # lgr_num, f0_predictor,
+                                                               # enhancer_adaptive_key, cr_threshold, k_step, use_spk_mix,
+                                                               # second_encoding,
+                                                               # loudness_envelope_adjustment
+                                                               )
             # os.remove("tts.wav")
             # return "Success", output_file_path
             return (origin_sampling_rate, origin_audio), (target_sampling_rate, target_audio)
@@ -119,18 +135,39 @@ class SvcInfer:
             traceback.print_exc()
             raise e
 
-    def vc_infer(self, output_format, sid, input_audio, sr, vc_transform, auto_f0, cluster_ratio,
-                 slice_db,
-                 noise_scale, pad_seconds, cl_num, lg_num, lgr_num, f0_predictor, enhancer_adaptive_key, cr_threshold,
-                 k_step, use_spk_mix, second_encoding, loudness_envelope_adjustment):
+    def vc_infer(self, sid, input_audio, sampling_rate, **options
+                 # vc_transform, auto_f0, cluster_ratio,
+                 # slice_db,
+                 # noise_scale, pad_seconds, cl_num, lg_num, lgr_num, f0_predictor, enhancer_adaptive_key, cr_threshold,
+                 # k_step, use_spk_mix, second_encoding, loudness_envelope_adjustment
+                 ):
         model = self.model
         if np.issubdtype(input_audio.dtype, np.integer):
             input_audio = (input_audio / np.iinfo(input_audio.dtype).max).astype(np.float32)
         if len(input_audio.shape) > 1:
             input_audio = librosa.to_mono(input_audio.transpose(1, 0))
-        if sr != 44100:
-            input_audio = librosa.resample(input_audio, orig_sr=sr, target_sr=44100)
+        if sampling_rate != 44100:
+            input_audio = librosa.resample(input_audio, orig_sr=sampling_rate, target_sr=44100)
         sf.write("temp.wav", input_audio, 44100, format="wav")
+
+        _options = dict(
+            # raw_audio_path=audio_path,
+            spk=sid,
+            tran=tran,
+            slice_db=slice_db,
+            cluster_infer_ratio=cluster_infer_ratio,
+            auto_predict_f0=auto_predict_f0,
+            noise_scale=noise_scale,
+            pad_seconds=pad_seconds,
+            clip_seconds=clip_seconds,
+            lg_num=lg_num,
+            lgr_num=lgr_num,
+            # F0_mean_pooling=F0_mean_pooling,
+            enhancer_adaptive_key=enhancer_adaptive_key,
+            f0_predictor=f0_predictor,
+            cr_threshold=cr_threshold)
+        if options is not None:
+            _options.update(options)
 
         pprint({
             "sid": sid,
@@ -151,6 +188,8 @@ class SvcInfer:
             "second_encoding": second_encoding,
             "loudness_envelope_adjustment": loudness_envelope_adjustment
         })
+        # _audio: np.array = model.slice_inference("temp.wav",
+        #                                          **_options)
 
         _audio = model.slice_inference(
             "temp.wav",
@@ -196,3 +235,26 @@ class SvcInfer:
         return model.target_sample, _audio
         # sf.write(output_file_path, _audio, model.target_sample, format=output_format)
         # return output_file_path
+
+    # tts_fn = get_audio
+    # def tts_fn(self, text,
+    #            tts_engine,
+    #            language,
+    #            speed,
+    #            *options):
+    #     return self.get_audio(text, tts_engine, language, speed, *options)
+    def tts_fn(self, _text, tts_engine, _lang, _rate,
+               sid, vc_transform, auto_f0, cluster_ratio,
+               slice_db, noise_scale, pad_seconds, cl_num, lg_num, lgr_num,
+               f0_predictor, enhancer_adaptive_key, cr_threshold, k_step,
+               use_spk_mix, second_encoding, loudness_envelope_adjustment
+               ):
+        return self.get_audio(_text, tts_engine, _lang, _rate,
+                              # sid=sid,
+                              vc_transform=vc_transform, auto_f0=auto_f0, cluster_ratio=cluster_ratio,
+                              slice_db=slice_db, noise_scale=noise_scale, pad_seconds=pad_seconds, cl_num=cl_num,
+                              lg_num=lg_num,
+                              lgr_num=lgr_num, f0_predictor=f0_predictor, enhancer_adaptive_key=enhancer_adaptive_key,
+                              cr_threshold=cr_threshold, k_step=k_step, use_spk_mix=use_spk_mix,
+                              second_encoding=second_encoding,
+                              loudness_envelope_adjustment=loudness_envelope_adjustment)
