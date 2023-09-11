@@ -1,5 +1,5 @@
 import os
-from typing import NamedTuple
+from typing import NamedTuple, Dict
 
 
 class ModelsInfo(NamedTuple):
@@ -24,7 +24,7 @@ class ModelsInfo(NamedTuple):
         }
 
 
-_modelsInfoRegister: dict[str, ModelsInfo] = {}
+_modelsInfoRegister: Dict[str, ModelsInfo] = {}
 
 
 def getModelsInfo(name) -> ModelsInfo:
