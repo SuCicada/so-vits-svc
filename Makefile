@@ -1,4 +1,9 @@
 #ifneq ($(conda),false)
+ifneq ("$(wildcard .env)","")
+	include .env
+	export
+endif
+
 .PHONY: lain
 CONDA_ENV=so-vits-svc
 lain_dir=models
@@ -69,3 +74,6 @@ lain_server:
 
 requirements-lock:
 	$(conda_run) pip freeze > requirements-infer-lock.txt
+
+upload:
+	$(call upload, .env, $(DEPLOY_PATH)/)

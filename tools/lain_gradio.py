@@ -32,6 +32,7 @@ from gradio import networking
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
+from tools.lain_server import add_server_api
 from tools.infer.models_info import getModelsInfo
 from tools.webui.webui_utils import Config, MODEL_TYPE, ENCODER_PRETRAIN
 from tools.webui.release_packing import ReleasePacker
@@ -1080,7 +1081,7 @@ f0_options = ["crepe", "pm", "dio", "harvest", "rmvpe"] if os.path.exists("pretr
 
 print(sys.argv)
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, help='model info name')
+parser.add_argument('--model', type=str, help='model info name', default="LainV2")
 parser.add_argument('--model_path', type=str, help='model_path')
 parser.add_argument('--config_path', type=str, help='config_path')
 parser.add_argument('--diff_model_path', type=str, help='diff_model_path')
@@ -1092,7 +1093,7 @@ parser.add_argument("--share", action='store_true', help='share')
 parser.add_argument('--debug', action='store_true', help='debug')
 # parser.add_argument('--inbrowser', action='store_true', help='inbrowser')
 args = parser.parse_args()
-
+load_svc_config: dict
 if args.model is not None:
     modelInfo = getModelsInfo(args.model)
     config = modelInfo.to_svc_config(str(root_project / "models"))
@@ -1101,12 +1102,20 @@ if args.model is not None:
     default_diff_model_path = config["diff_model_path"]
     default_diff_config_path = config["diff_config_path"]
     default_cluster_model_path = config["cluster_model_path"]
+    load_svc_config = config
 else:
     default_model_path = args.model_path
     default_config_path = args.config_path
     default_diff_model_path = args.diff_model_path
     default_diff_config_path = args.diff_config_path
     default_cluster_model_path = args.cluster_model_path
+    load_svc_config = {
+        "model_path": default_model_path,
+        "config_path": default_config_path,
+        "diff_model_path": default_diff_model_path,
+        "diff_config_path": default_diff_config_path,
+        "cluster_model_path": default_cluster_model_path
+    }
 
 app = gr.Blocks()
 with app:
@@ -1122,7 +1131,7 @@ with app:
         
         ### 模型地址：[SuCicada/Lain-so-vits-svc-4.1](https://huggingface.co/SuCicada/Lain-so-vits-svc-4.1)
         
-        ### 我们的 Lain 中文交流频道：https://discord.gg/AS43RhmE
+        ### 我们的 Lain 中文交流频道参见：https://github.com/Lain-Cyberia
         <br>
         注意：本页面是为了推理Lain而准备的。其他完整功能请使用整合包，
         
@@ -1432,6 +1441,28 @@ with app:
                     install_model_btn.click(release_install, [model_to_install], [install_output])
 
 
+def get_svc_infer():
+    global model, svcInfer,load_svc_config
+    if svcInfer is None:
+        svcInfer = SvcInfer(load_svc_config)
+        model = svcInfer.model
+    return svcInfer
+
+
+def launch():
+    api_app, _, _ = app.queue(concurrency_count=1022, max_size=2044) \
+        .launch(root_path=args.root_path,
+                server_name="0.0.0.0",
+                server_port=args.port,
+                prevent_thread_lock=True,
+                share=args.share,
+                app_kwargs={
+                    "docs_url": "/docs",
+                }, )
+    add_server_api(api_app,get_svc_infer)
+    app.block_thread()
+
+
 def main():
     if args.debug:
         port = networking.get_first_available_port(
@@ -1453,11 +1484,7 @@ def main():
         print(f"http://127.0.0.1:{port}")
         uvicorn.run(f"{filename}:app.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
     else:
-        app.queue(concurrency_count=1022, max_size=2044) \
-            .launch(root_path=args.root_path,
-                    server_name="0.0.0.0",
-                    server_port=args.port,
-                    share=args.share)
+        launch()
 
 
 if __name__ == '__main__':
