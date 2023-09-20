@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import os
 import sys
@@ -57,7 +58,10 @@ def add_server_api(app: FastAPI, get_svc_infer: Callable):
     async def generate_audio(request: Request):
         params = await request.json()
         print("generate_audio", params)
-        _, (sampling_rate, audio_data) = get_svc_infer().get_audio(**params)
+        loop = asyncio.get_event_loop()
+
+        _, (sampling_rate, audio_data) = await loop.run_in_executor(None,
+                                                                    lambda: get_svc_infer().get_audio(**params))
         response_data = {
             "status": "ok",
             "sampling_rate": sampling_rate
