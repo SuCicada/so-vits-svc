@@ -28,6 +28,7 @@ import soundfile as sf
 import torch
 import uvicorn
 import yaml
+from fastapi import FastAPI
 from gradio import networking
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
@@ -1094,6 +1095,7 @@ parser.add_argument('--debug', action='store_true', help='debug')
 # parser.add_argument('--inbrowser', action='store_true', help='inbrowser')
 args = parser.parse_args()
 load_svc_config: dict
+
 if args.model is not None:
     modelInfo = getModelsInfo(args.model)
     config = modelInfo.to_svc_config(str(root_project / "models"))
@@ -1118,6 +1120,7 @@ else:
     }
 
 app = gr.Blocks()
+
 with app:
     gr.Markdown(value="""
         <h1 style='text-align: center;'> Serial Experiments Lain </h1>
@@ -1440,14 +1443,32 @@ with app:
                                       [packing_output_msg])
                     install_model_btn.click(release_install, [model_to_install], [install_output])
 
+print("app init done")
+
 
 def get_svc_infer():
-    global model, svcInfer,load_svc_config
+    global model, svcInfer, load_svc_config
     if svcInfer is None:
         svcInfer = SvcInfer(load_svc_config)
         model = svcInfer.model
     return svcInfer
 
+# api_app:FastAPI = FastAPI()
+
+
+def launch_app():
+    global api_app
+
+# api_app, _, _ = app.queue(concurrency_count=1022, max_size=2044) \
+# .launch(root_path=args.root_path,
+#     server_name="0.0.0.0",
+#     server_port=17865,
+#     prevent_thread_lock=True,
+#     share=args.share,
+#     app_kwargs={
+#         "docs_url": "/docs",
+#     }, )
+# add_server_api(api_app, get_svc_infer)
 
 def launch():
     api_app, _, _ = app.queue(concurrency_count=1022, max_size=2044) \
@@ -1462,13 +1483,19 @@ def launch():
     add_server_api(api_app,get_svc_infer)
     app.block_thread()
 
+add_server_api(app.app, get_svc_infer)
 
 def main():
+    print(args.debug)
     if args.debug:
-        port = networking.get_first_available_port(
-            networking.INITIAL_PORT_VALUE,
-            networking.INITIAL_PORT_VALUE + networking.TRY_NUM_PORTS,
-        )
+        print("debug mode")
+        if args.port:
+            port = args.port
+        else:
+            port = networking.get_first_available_port(
+                networking.INITIAL_PORT_VALUE,
+                networking.INITIAL_PORT_VALUE + networking.TRY_NUM_PORTS,
+            )
         original_path = sys.argv[0]
         from gradio import utils as gradio_utils
         abs_original_path = gradio_utils.abspath(original_path)
@@ -1482,7 +1509,9 @@ def main():
 
         print("filename", filename, abs_parent)
         print(f"http://127.0.0.1:{port}")
-        uvicorn.run(f"{filename}:app.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="warning")
+        # uvicorn.run(f"{filename}:app.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="debug")
+        # launch_app()
+        uvicorn.run(f"lain_gradio:app.app", reload=True, reload_dirs=[abs_parent], port=port, log_level="debug")
     else:
         launch()
 

@@ -4,16 +4,18 @@ import sounddevice
 import soundfile
 
 text = """
-人はみな、繋がっている。
+シミュレーション, パーソナルコンピュータ
 """
 req_json = {
-# "data":[{
+    # "data":[{
     "text": text,
-    "tts_engine": "gtts",
+    "tts_engine": "edge-tts",
     "speed": 1,
-# }]
+    # }]
 }
-response = requests.post('http://localhost:7860/svcapi/get_audio', json=req_json)
+url = 'http://localhost:17861/svcapi/get_audio'
+# url="https://lain.sucicada.top/so-vits-svc/svcapi/get_audio"
+response = requests.post(url, json=req_json)
 # json_data = pickle.loads(response.content)
 json_data = json.loads(response.headers["Response-Data"])
 print(json_data)
@@ -32,11 +34,6 @@ from pydub.playback import play
 
 sound = AudioSegment.from_file('out.wav')
 play(sound)
-
-
-
-
-
 
 import pydub
 # import pyaudio

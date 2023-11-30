@@ -7,8 +7,7 @@ endif
 .PHONY: lain
 CONDA_ENV=so-vits-svc
 lain_dir=models
-test:
-	@echo $(lain_dir)
+
 install:
 	pip install -r requirements_infer.txt
 lain_download:
@@ -24,11 +23,15 @@ lain_download:
 		https://github.com/openvpi/vocoders/releases/download/nsf-hifigan-v1/nsf_hifigan_20221211.zip )
 	unzip -o pretrain/nsf_hifigan/nsf_hifigan_20221211.zip -d pretrain
 
+	#$(call wget_if_not_exist, \
+#		pretrain/rmvpe.pt  ,\
+#		https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/rmvpe.pt )
 	$(call wget_if_not_exist, \
-		pretrain/rmvpe.pt  ,\
-		https://huggingface.co/datasets/ylzz1997/rmvpe_pretrain_model/resolve/main/rmvpe.pt )
+		pretrain/rmvpe.zip  ,\
+		https://github.com/yxlllc/RMVPE/releases/download/230917/rmvpe.zip )
+	unzip -o pretrain/rmvpe.zip -d pretrain && mv pretrain/model.pt pretrain/rmvpe.pt
 
-	# models
+# models
 	python tools/infer/download_models.py
 #	$(call wget_if_not_exist, \
 #		models/G_2400_infer.pth  ,\
@@ -64,10 +67,23 @@ _lain_gradio_cmd = $(conda_run) python tools/lain_gradio.py \
 #      --diff_config_path $(lain_dir)/diffusion/config.yaml \
 #      --cluster_model_path $(lain_dir)/kmeans_10000.pt \
 #
+
+define sumake_run
+	if [ -z "${SUMAKE}" ]; then \
+		sumake $@   ;\
+	else \
+		$1  ;\
+	fi
+endef
+
 lain_gradio_run:
-	$(_lain_gradio_cmd) $(args) # --port 17861
+	$(call sumake_run, $(_lain_gradio_cmd) --port 17861 $(args) )  #
+
 lain_gradio_debug:
-	$(_lain_gradio_cmd) --debug
+	$(call sumake_run, $(_lain_gradio_cmd) --debug --port 17861 )
+
+test_server:
+	$(call sumake_run, $(conda_run) python tools/test_server.py )
 
 lain_server:
 	$(conda_run) python tools/server.py
@@ -77,3 +93,4 @@ requirements-lock:
 
 upload:
 	$(call upload, .env, $(DEPLOY_PATH)/)
+

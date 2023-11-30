@@ -6,14 +6,15 @@ import sys
 from typing import Callable
 
 import uvicorn
-
+import gradio
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
+
+# from tools.lain_gradio import get_svc_infer
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 from tools.file_util import get_root_project
 from tools.infer import models_info
-from tools.infer_base import SvcInfer
 
 from tools.audio_utils import numpy_to_mem_file
 
@@ -24,10 +25,11 @@ def get_model_config():
     return model_info.to_svc_config(f"{get_root_project()}/models")
 
 
-def main():
-    app = FastAPI()
+app = FastAPI()
 
-    svc_infer = SvcInfer(get_model_config())
+
+def main():
+    # svc_infer = SvcInfer(get_model_config())
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, help='port')
     args = parser.parse_args()
@@ -36,7 +38,6 @@ def main():
     #     text: str
     #     speaker: str = "mikisayaka"
 
-    import gradio
     from lain_gradio import app as gradio_app
 
     gradio_fastapi_app = gradio.routes.App.create_app(gradio_app)
@@ -45,10 +46,11 @@ def main():
     # @app.post("/audio/so_vits_svc")
     # async def _generate_audio(params: Dict[str, Any]):
     #     return generate_audio(params, svc_infer)
-    add_server_api(app, svc_infer)
-    # port = os.environ.get('PORT', 7100)
+    add_server_api(app)
     port = args.port
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    if not port:
+        port = os.environ.get('PORT', 17861)
+    uvicorn.run("lain_server:app", host="0.0.0.0", port=port, reload=True)
 
 
 def add_server_api(app: FastAPI, get_svc_infer: Callable):
