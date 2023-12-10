@@ -153,7 +153,7 @@ class SvcInfer:
         _options = dict(
             # raw_audio_path=audio_path,
             spk=sid,
-            tran=tran,
+            tran=vc_transform,
             slice_db=slice_db,
             cluster_infer_ratio=cluster_infer_ratio,
             auto_predict_f0=auto_predict_f0,
@@ -163,53 +163,58 @@ class SvcInfer:
             lg_num=lg_num,
             lgr_num=lgr_num,
             # F0_mean_pooling=F0_mean_pooling,
-            enhancer_adaptive_key=enhancer_adaptive_key,
             f0_predictor=f0_predictor,
-            cr_threshold=cr_threshold)
+            enhancer_adaptive_key=enhancer_adaptive_key,
+            cr_threshold=cr_threshold,
+            k_step=k_step,
+            use_spk_mix=use_spk_mix,
+            second_encoding=second_encoding,
+            loudness_envelope_adjustment=loudness_envelope_adjustment
+            )
         if options is not None:
             _options.update(options)
-
-        pprint({
-            "sid": sid,
-            "vc_transform": vc_transform,
-            "auto_f0": auto_f0,
-            "cluster_ratio": cluster_ratio,
-            "slice_db": slice_db,
-            "noise_scale": noise_scale,
-            "pad_seconds": pad_seconds,
-            "cl_num": cl_num,
-            "lg_num": lg_num,
-            "lgr_num": lgr_num,
-            "f0_predictor": f0_predictor,
-            "enhancer_adaptive_key": enhancer_adaptive_key,
-            "cr_threshold": cr_threshold,
-            "k_step": k_step,
-            "use_spk_mix": use_spk_mix,
-            "second_encoding": second_encoding,
-            "loudness_envelope_adjustment": loudness_envelope_adjustment
-        })
+        pprint(_options)
+        # pprint({
+        #     "spk": spk,
+        #     "vc_transform": vc_transform,
+        #     "auto_predict_f0": auto_predict_f0,
+        #     "cluster_ratio": cluster_ratio,
+        #     "slice_db": slice_db,
+        #     "noise_scale": noise_scale,
+        #     "pad_seconds": pad_seconds,
+        #     "cl_num": cl_num,
+        #     "lg_num": lg_num,
+        #     "lgr_num": lgr_num,
+        #     "f0_predictor": f0_predictor,
+        #     "enhancer_adaptive_key": enhancer_adaptive_key,
+        #     "cr_threshold": cr_threshold,
+        #     "k_step": k_step,
+        #     "use_spk_mix": use_spk_mix,
+        #     "second_encoding": second_encoding,
+        #     "loudness_envelope_adjustment": loudness_envelope_adjustment
+        # })
         # _audio: np.array = model.slice_inference("temp.wav",
         #                                          **_options)
 
         _audio = model.slice_inference(
             "temp.wav",
-            sid,
-            vc_transform,
-            slice_db,
-            cluster_ratio,
-            auto_f0,
-            noise_scale,
-            pad_seconds,
-            cl_num,
-            lg_num,
-            lgr_num,
-            f0_predictor,
-            enhancer_adaptive_key,
-            cr_threshold,
-            k_step,
-            use_spk_mix,
-            second_encoding,
-            loudness_envelope_adjustment
+            spk=_options["spk"],  # sid,
+            tran=_options["tran"],  # vc_transform,
+            slice_db=_options["slice_db"],  # slice_db,
+            cluster_infer_ratio=_options["cluster_infer_ratio"],  # cluster_ratio,
+            auto_predict_f0=_options["auto_predict_f0"],  # auto_f0,
+            noise_scale=_options["noise_scale"],  # noise_scale,
+            pad_seconds=_options["pad_seconds"],  # pad_seconds,
+            clip_seconds=_options["clip_seconds"],  # cl_num,
+            lg_num=_options["lg_num"],  # lg_num,
+            lgr_num=_options["lgr_num"],  # lgr_num,
+            f0_predictor=_options["f0_predictor"],  # f0_predictor,
+            enhancer_adaptive_key=_options["enhancer_adaptive_key"],  # enhancer_adaptive_key,
+            cr_threshold=_options["cr_threshold"],  # cr_threshold,
+            k_step=_options["k_step"],  # k_step,
+            use_spk_mix=_options["use_spk_mix"],  # use_spk_mix,
+            second_encoding=_options["second_encoding"],  # second_encoding,
+            loudness_envelope_adjustment=_options["loudness_envelope_adjustment"],  # loudness_envelope_adjustment
         )
         model.clear_empty()
         if not os.path.exists("results"):
