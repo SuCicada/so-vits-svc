@@ -1446,7 +1446,7 @@ with app:
 print("app init done")
 
 
-def get_svc_infer():
+def get_svc_infer() -> SvcInfer:
     global model, svcInfer, load_svc_config
     if svcInfer is None:
         svcInfer = SvcInfer(load_svc_config)
