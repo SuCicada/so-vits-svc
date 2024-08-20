@@ -1,0 +1,29 @@
+services:
+  so-vits-svc:
+#    user: "1000:1000"
+    container_name: so-vits-svc
+#    image: nvidia/cuda:12.2.0-base-ubuntu22.04
+    image: sucicada/cuda-12.2.0-base-ubuntu22.04-runtime
+    build:
+      context: .
+      dockerfile: Dockerfile
+    runtime: nvidia
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - /home/peng/miniconda3:/home/peng/miniconda3:ro
+      - ./entrypoint.sh:/entrypoint.sh
+      - ../../:/app/
+      - $HOME/.sumake:/root/.sumake:ro
+    command: sumake lain_gradio_run
+    ports:
+      - "17861:17861"
+    entrypoint: /entrypoint.sh
+#    command: my_main_command --option1 value1
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [gpu]

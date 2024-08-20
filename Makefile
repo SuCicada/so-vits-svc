@@ -95,3 +95,7 @@ requirements-lock:
 upload:
 	$(call upload, .env, $(DEPLOY_PATH)/)
 
+docker-run-local:
+	cd deploy/local && \
+		docker-compose down && \
+		docker-compose up -d
