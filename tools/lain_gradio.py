@@ -28,6 +28,7 @@ import soundfile as sf
 import torch
 import uvicorn
 import yaml
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from gradio import networking
 
@@ -47,6 +48,7 @@ from utils import mix_model
 
 root_project = Path(__file__).parent.parent.absolute()
 os.chdir(root_project)
+load_dotenv()
 
 os.environ["PATH"] += os.pathsep + os.path.join(os.getcwd(), "ffmpeg", "bin")
 

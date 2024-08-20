@@ -1,6 +1,6 @@
 import torch
 from fairseq import checkpoint_utils
-
+import os
 from vencoder.encoder import SpeechEncoder
 
 
@@ -8,6 +8,9 @@ class ContentVec768L12(SpeechEncoder):
     def __init__(self, vec_path="pretrain/checkpoint_best_legacy_500.pt", device=None):
         super().__init__()
         print("load model(s) from {}".format(vec_path))
+        if not os.path.exists(vec_path):
+            realpath = os.path.realpath(vec_path)
+            raise FileNotFoundError("Model file not found: {}".format(realpath))
         self.hidden_dim = 768
         models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task(
           [vec_path],

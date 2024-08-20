@@ -1,4 +1,8 @@
-todo ......
+init
+```bash
+conda create --name so-vits-svc python=3.8 -y
+. ./activate.sh
+```
 
 
 reference:
@@ -21,6 +25,8 @@ python tools/webui/release_packing.py
 
 # upload
 pyhton tools/upload_huggingface.py
+
+python compress_model.py -c models/config.json -i  tmp/G_3200.pth  -o tmp/G_3200_compressed.pth
 ```
 
 ## notice

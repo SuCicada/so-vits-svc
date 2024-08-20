@@ -9,6 +9,7 @@ CONDA_ENV=so-vits-svc
 lain_dir=models
 
 install:
+	pip install pip==23.1.2
 	pip install -r requirements_infer.txt
 lain_download:
 	#$(call wget_if_not_exist, \

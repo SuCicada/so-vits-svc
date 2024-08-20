@@ -12,7 +12,7 @@ librosa
 torch
 torchaudio
 
-fairseq
+fairseq==0.12.2
 praat-parselmouth
 scipy==1.10.1
 ffmpeg-python
@@ -21,3 +21,6 @@ soundFile==0.12.1
 sounddevice
 faiss-cpu
 python-dotenv
+numpy==1.23.5
+omegaconf==2.0.6
+pip==23.1.2

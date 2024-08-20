@@ -1,13 +1,39 @@
 import asyncio
+import base64
 import io
+import os
 from io import BytesIO
+from typing_extensions import deprecated
 
 from pydub import AudioSegment
 import numpy
-
+import requests
+import json
 from tools import audio_utils
 
 
+def text_to_audio(text, tts_engine="gtts", language="ja", speed=1) -> (int, numpy.ndarray):
+    url = os.getenv("TTSHUB_API_URL")
+    payload = json.dumps({
+        "tts_engine": tts_engine,
+        "text": text,
+        "language": language,
+        "speed": speed
+    })
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    print("url:", url)
+    response = requests.request("POST", url, headers=headers, data=payload)
+    if response.status_code != 200:
+        raise Exception(f"TTSHub API Error: {response.status_code}")
+    result = response.json()
+    sampling_rate,wav_bytes_base64 = result["sampling_rate"], result["audio"]
+    wav_bytes = base64.b64decode(wav_bytes_base64)
+    numarr: numpy.ndarray = numpy.frombuffer(wav_bytes, dtype=numpy.int16)
+    return sampling_rate, numarr
+
+@deprecated("")
 def tts_with_edge_tts(text, language, _rate) -> BytesIO:
     import edge_tts
     voice = {
@@ -16,7 +42,7 @@ def tts_with_edge_tts(text, language, _rate) -> BytesIO:
         "zh": "zh-CN-XiaoxiaoNeural"
     }[language]
 
-    _rate = f"+{int((_rate-1) * 100)}%" if _rate >= 1 else f"{int((1-_rate) * 100)}%"
+    _rate = f"+{int((_rate - 1) * 100)}%" if _rate >= 1 else f"{int((1 - _rate) * 100)}%"
 
     async def _write():
         file_in_memory = io.BytesIO()
@@ -31,6 +57,7 @@ def tts_with_edge_tts(text, language, _rate) -> BytesIO:
     return asyncio.run(_write())
 
 
+@deprecated("")
 def tts_with_gtts(text, language) -> BytesIO:
     lang = {
         "ja": "ja",
@@ -45,6 +72,7 @@ def tts_with_gtts(text, language) -> BytesIO:
     return stream
 
 
+@deprecated("")
 def mp3_to_wav(mp3_bytes) -> (int, bytes):
     # mp3 to wav
     mp3 = AudioSegment.from_file(io.BytesIO(mp3_bytes), format="mp3")
@@ -55,6 +83,7 @@ def mp3_to_wav(mp3_bytes) -> (int, bytes):
     return sampling_rate, wav_bytes
 
 
+@deprecated("")
 def text_to_wav(text, tts_engine="gtts", language="ja", rate=1) -> (int, bytes):
     text = text.strip()
     stream: BytesIO
@@ -72,8 +101,8 @@ def text_to_wav(text, tts_engine="gtts", language="ja", rate=1) -> (int, bytes):
     sampling_rate, wav_bytes = mp3_to_wav(mp3_bytes)
     return sampling_rate, wav_bytes
 
-
-def text_to_audio(text, tts_engine="gtts", language="ja", rate=1) -> (int, numpy.ndarray):
+@deprecated("")
+def text_to_audio1(text, tts_engine="gtts", language="ja", rate=1) -> (int, numpy.ndarray):
     sampling_rate, wav_bytes = text_to_wav(text, tts_engine, language, rate)
     wav: numpy.ndarray = numpy.frombuffer(wav_bytes, dtype=numpy.int16)
     if tts_engine == "gtts":
