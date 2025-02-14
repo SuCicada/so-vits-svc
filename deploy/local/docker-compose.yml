@@ -1,12 +1,14 @@
+name: so-vits-svc
+
 services:
   so-vits-svc:
 #    user: "1000:1000"
     container_name: so-vits-svc
 #    image: nvidia/cuda:12.2.0-base-ubuntu22.04
     image: sucicada/cuda-12.2.0-base-ubuntu22.04-runtime
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # build:
+      # context: .
+      # dockerfile: Dockerfile
     runtime: nvidia
     restart: unless-stopped
     working_dir: /app
@@ -15,7 +17,7 @@ services:
       - ./entrypoint.sh:/entrypoint.sh
       - ../../:/app/
       - $HOME/.sumake:/root/.sumake:ro
-    command: sumake lain_gradio_run
+    command: sumake lain_gradio_run args=" --root_path /so-vits-svc"
     ports:
       - "17861:17861"
     entrypoint: /entrypoint.sh

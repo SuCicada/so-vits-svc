@@ -176,3 +176,5 @@ pre_trained_model/
 /release_packs
 /models_archive
 tools/trash
+models2
+configs.json.old
